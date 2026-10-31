@@ -3,10 +3,8 @@ const assert = require('node:assert/strict');
 const { createRemoteDatabase } = require('./remote-database');
 
 test('local initialization preserves records and zero quantity', async () => {
-  process.env.DATABASE_PATH = ':memory:';
-  delete process.env.TURSO_DATABASE_URL;
-  delete process.env.TURSO_AUTH_TOKEN;
-  const db = require('./database');
+  const { createDatabase } = require('./db-core');
+  const db = createDatabase({ DATABASE_PATH: ':memory:', BASIC_AUTH_USER: 'haven', BASIC_AUTH_PASSWORD: 'test migration password' });
   await db.ready;
   assert.equal((await db.prepare('SELECT COUNT(*) AS count FROM categories').get()).count, 6);
   const inserted = await db.prepare('INSERT INTO items (name, quantity) VALUES (?, ?)').run('测试物品', 0);
@@ -33,4 +31,37 @@ test('cloud adapter binds values and decodes SQLite rows', async () => {
 test('cloud adapter propagates failure without silently using temporary storage', async () => {
   const db = createRemoteDatabase('libsql://example.turso.io', 'test-token', async () => ({ ok: false, status: 401 }));
   await assert.rejects(db.prepare('SELECT 1').get(), /401/);
+});
+
+test('cloud transactions guard later steps and roll back SQL errors', async () => {
+  const { DatabaseSync } = require('node:sqlite');
+  const sqlite = new DatabaseSync(':memory:');
+  sqlite.exec('CREATE TABLE sample (id TEXT PRIMARY KEY NOT NULL)');
+  const db = createRemoteDatabase('libsql://example.turso.io', 'test-token', async (url, options) => {
+    const requests = JSON.parse(options.body).requests;
+    const steps = requests[1].batch.steps;
+    const results = [], errors = [];
+    function condition(c) {
+      if (!c) return true;
+      if (c.type === 'ok') return results[c.step] != null && !errors[c.step];
+      if (c.type === 'not') return !condition(c.cond);
+      throw Error('Unexpected condition');
+    }
+    for (const step of steps) {
+      let result = null, error = null;
+      if (condition(step.condition)) {
+        try {
+          const args = (step.stmt.args || []).map(a => a.type === 'null' ? null : a.type === 'integer' ? Number(a.value) : a.value);
+          const rows = sqlite.prepare(step.stmt.sql).all(...args);
+          result = { rows, cols: [] };
+        } catch (err) { error = { message: err.message }; }
+      }
+      results.push(result); errors.push(error);
+    }
+    return { ok: true, json: async () => ({ results: [{ type: 'ok' }, { type: 'ok', response: { result: { step_results: results, step_errors: errors } } }, { type: 'ok' }] }) };
+  });
+  await db.batch([{ sql: 'INSERT INTO sample VALUES (?)', args: ['one'] }]);
+  await assert.rejects(db.batch([{ sql: 'INSERT INTO sample VALUES (?)', args: ['two'] }, { sql: 'INSERT INTO sample VALUES (?)', args: ['one'] }, { sql: 'INSERT INTO sample VALUES (?)', args: ['three'] }]));
+  assert.deepEqual(sqlite.prepare('SELECT id FROM sample').all().map(row => row.id), ['one']);
+  sqlite.close();
 });

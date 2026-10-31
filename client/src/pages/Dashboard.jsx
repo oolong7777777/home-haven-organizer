@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api'
+import { useAuth } from '../AuthContext'
 
 export default function Dashboard() {
+  const { account } = useAuth()
   const [stats, setStats] = useState({ items: 0, categories: 0, locations: 0, today: 0 })
   const [recent, setRecent] = useState([])
   const [loading, setLoading] = useState(true)
@@ -27,7 +29,7 @@ export default function Dashboard() {
   return (
     <div className="haven-page haven-dashboard">
       <header className="haven-page-heading">
-        <div><p className="haven-eyebrow">我的家 · 一目了然</p><h1>收纳概览</h1><p className="haven-subtitle">让物品有归处，让生活更有序。</p></div>
+        <div><p className="haven-eyebrow">{account.activeRoom?.name} · 一目了然</p><h1>收纳概览</h1><p className="haven-subtitle">让物品有归处，让生活更有序。</p></div>
         <Link to="/items?add=1" className="haven-button haven-button-primary">＋ 添加物品</Link>
       </header>
 

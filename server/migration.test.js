@@ -1,0 +1,33 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const { DatabaseSync } = require('node:sqlite');
+const { mkdtempSync, rmSync } = require('node:fs');
+const { tmpdir } = require('node:os');
+const path = require('node:path');
+const { createDatabase } = require('./db-core');
+const { verifyPassword, hashPassword } = require('./passwords');
+
+test('legacy data stays with the established owner and migration is repeatable', async t => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'haven-migration-'));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const file = path.join(dir, 'test.sqlite');
+  const old = new DatabaseSync(file);
+  old.exec("CREATE TABLE categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, color TEXT, icon TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP); INSERT INTO categories(name) VALUES ('原有分类');");
+  old.close();
+  const env = { DATABASE_PATH: file, BASIC_AUTH_USER: 'haven', BASIC_AUTH_PASSWORD: 'original long password' };
+  let db = createDatabase(env); await db.ready;
+  const owner = db.prepare('SELECT * FROM users WHERE username = ?').get('haven');
+  assert.ok(await verifyPassword(env.BASIC_AUTH_PASSWORD, owner.password_hash));
+  assert.equal(db.prepare('SELECT household_id FROM categories WHERE id = 1').get().household_id, 'home-legacy');
+  assert.equal(db.prepare('SELECT COUNT(*) AS count FROM categories').get().count, 1);
+  db.prepare("INSERT INTO categories(name) VALUES ('来自旧版本的插入')").run();
+  assert.equal(db.prepare('SELECT household_id FROM categories WHERE id = 2').get().household_id, 'home-legacy');
+  const changedHash = await hashPassword('a changed owner password');
+  db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(changedHash, owner.id);
+  db.close();
+  db = createDatabase(env); await db.ready;
+  assert.equal(db.prepare('SELECT COUNT(*) AS count FROM users').get().count, 1);
+  assert.equal(db.prepare('SELECT password_hash FROM users WHERE id = ?').get(owner.id).password_hash, changedHash);
+  assert.equal(db.prepare('SELECT COUNT(*) AS count FROM categories').get().count, 2);
+  db.close();
+});

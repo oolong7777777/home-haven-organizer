@@ -30,6 +30,25 @@ function createRemoteDatabase(url, token, request = fetch) {
     return { rows, changes: result.affected_row_count, lastInsertRowid: result.last_insert_rowid == null ? undefined : Number(result.last_insert_rowid) };
   }
   return {
+    async batch(statements) {
+      const steps = [{ stmt: { sql: 'BEGIN IMMEDIATE' } }];
+      for (const { sql, args = [] } of statements) {
+        steps.push({ condition: { type: 'ok', step: steps.length - 1 }, stmt: { sql, args: args.map(arg), want_rows: true } });
+      }
+      const commit = steps.length;
+      steps.push({ condition: { type: 'ok', step: commit - 1 }, stmt: { sql: 'COMMIT' } });
+      steps.push({ condition: { type: 'not', cond: { type: 'ok', step: commit } }, stmt: { sql: 'ROLLBACK' } });
+      const response = await request(endpoint, {
+        method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(15000),
+        body: JSON.stringify({ requests: [{ type: 'execute', stmt: { sql: 'PRAGMA foreign_keys = ON' } }, { type: 'batch', batch: { steps } }, { type: 'close' }] }),
+      });
+      if (!response.ok) throw new Error(`Cloud database transaction failed (${response.status})`);
+      const payload = await response.json();
+      const result = payload.results?.[1]?.response?.result;
+      if (payload.results?.some(item => item.type === 'error') || !result || result.step_errors?.some(Boolean)) throw new Error('Cloud database transaction failed');
+      return result.step_results?.slice(1, commit);
+    },
     async exec(sql) {
       for (const statement of sql.split(';').map(s => s.trim()).filter(Boolean)) await execute(statement);
     },
