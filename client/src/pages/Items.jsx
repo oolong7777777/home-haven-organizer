@@ -17,6 +17,7 @@ export default function Items() {
   const [form, setForm] = useState(INIT)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
+  const [actionError, setActionError] = useState('')
 
   useEffect(() => {
     Promise.all([api.items.list(), api.categories.list(), api.locations.list()])
@@ -33,12 +34,14 @@ export default function Items() {
   })
 
   function openAdd() {
+    setActionError('')
     setForm(INIT)
     setEditItem(null)
     setModal(true)
   }
 
   function openEdit(item) {
+    setActionError('')
     setForm({
       name: item.name,
       description: item.description || '',
@@ -54,11 +57,17 @@ export default function Items() {
 
   async function handleSave() {
     if (!form.name.trim()) return
+    setActionError('')
+    const quantity = Number(form.quantity)
+    if (!Number.isInteger(quantity) || quantity < 0) {
+      setActionError('数量必须是大于或等于 0 的整数')
+      return
+    }
     setSaving(true)
     try {
       const data = {
         ...form,
-        quantity: parseInt(form.quantity) || 1,
+        quantity,
         location_id: form.location_id ? parseInt(form.location_id) : null,
         category_id: form.category_id ? parseInt(form.category_id) : null,
       }
@@ -70,6 +79,8 @@ export default function Items() {
         setItems([created, ...items])
       }
       setModal(false)
+    } catch (err) {
+      setActionError(err.message || '保存失败，请重试')
     } finally {
       setSaving(false)
     }
@@ -77,8 +88,13 @@ export default function Items() {
 
   async function handleDelete(item) {
     if (!confirm(`确定删除「${item.name}」吗？`)) return
-    await api.items.delete(item.id)
-    setItems(items.filter(i => i.id !== item.id))
+    try {
+      await api.items.delete(item.id)
+      setItems(items.filter(i => i.id !== item.id))
+      setActionError('')
+    } catch (err) {
+      setActionError(err.message || '删除失败，请重试')
+    }
   }
 
   function setF(key, val) { setForm(f => ({ ...f, [key]: val })) }
@@ -94,7 +110,7 @@ export default function Items() {
   )
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">物品管理</h1>
@@ -108,6 +124,7 @@ export default function Items() {
         </button>
       </div>
 
+      {actionError && !modal && <p role="alert" className="text-red-600 mb-4">{actionError}</p>}
       <div className="flex gap-3 mb-6 flex-wrap">
         <input
           type="text"
@@ -168,7 +185,7 @@ export default function Items() {
                 >
                   {item.category_icon || '📦'}
                 </div>
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                   <button
                     onClick={() => openEdit(item)}
                     title="编辑"
@@ -230,6 +247,7 @@ export default function Items() {
       {modal && (
         <Modal title={editItem ? '编辑物品' : '添加物品'} onClose={() => setModal(false)}>
           <div className="space-y-4">
+            {actionError && <p role="alert" className="text-sm text-red-600">{actionError}</p>}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">物品名称 <span className="text-red-400">*</span></label>
               <input

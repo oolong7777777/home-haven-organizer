@@ -9,9 +9,9 @@ const navItems = [
 
 export default function Layout() {
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
-      <aside className="w-60 bg-white border-r border-gray-100 flex flex-col flex-shrink-0">
-        <div className="px-6 py-5 border-b border-gray-100">
+    <div className="flex flex-col md:flex-row h-dvh bg-gray-50 overflow-hidden">
+      <aside className="w-full md:w-60 bg-white border-b md:border-b-0 md:border-r border-gray-100 flex flex-col flex-shrink-0">
+        <div className="px-5 py-3 md:py-5 border-b border-gray-100">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center text-white text-lg leading-none">
               🏠
@@ -23,13 +23,13 @@ export default function Layout() {
           </div>
         </div>
 
-        <nav className="flex-1 p-3 space-y-0.5">
+        <nav aria-label="主导航" className="flex md:block md:flex-1 p-2 md:p-3 gap-1 md:space-y-0.5">
           {navItems.map(({ to, emoji, label }) => (
             <NavLink
               key={to}
               to={to}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                `flex flex-1 md:flex-none items-center justify-center md:justify-start gap-2 md:gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
                   isActive
                     ? 'bg-indigo-50 text-indigo-700'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
@@ -42,12 +42,12 @@ export default function Layout() {
           ))}
         </nav>
 
-        <div className="px-6 py-4 border-t border-gray-100">
+        <div className="hidden md:block px-6 py-4 border-t border-gray-100">
           <p className="text-xs text-gray-300 text-center">家物管家 v1.0</p>
         </div>
       </aside>
 
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 min-h-0 min-w-0 overflow-auto">
         <Outlet />
       </main>
     </div>

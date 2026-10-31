@@ -1,0 +1,10 @@
+services:
+  home-haven:
+    build: .
+    ports:
+      - "127.0.0.1:3001:3001"
+    volumes:
+      - home-haven-data:/data
+    restart: unless-stopped
+volumes:
+  home-haven-data:

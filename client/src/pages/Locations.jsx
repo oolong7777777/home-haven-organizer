@@ -46,7 +46,7 @@ function LocationNode({ node, allNodes, onEdit, onDelete, onSelect, selectedId, 
         {node.item_count > 0 && (
           <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">{node.item_count}</span>
         )}
-        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
           <button
             onClick={e => { e.stopPropagation(); onEdit(node) }}
             className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-indigo-500 text-xs"

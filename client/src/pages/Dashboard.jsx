@@ -6,6 +6,7 @@ export default function Dashboard() {
   const [stats, setStats] = useState({ items: 0, categories: 0, locations: 0, today: 0 })
   const [recent, setRecent] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     Promise.all([api.stats(), api.items.list()])
@@ -14,7 +15,7 @@ export default function Dashboard() {
         setRecent(items.slice(0, 6))
         setLoading(false)
       })
-      .catch(() => setLoading(false))
+      .catch(err => { setError(err.message || '加载失败，请重试'); setLoading(false) })
   }, [])
 
   const statCards = [
@@ -35,8 +36,10 @@ export default function Dashboard() {
     )
   }
 
+  if (error) return <div role="alert" className="p-8 text-red-600">{error}<button className="block mt-4 underline" onClick={() => window.location.reload()}>重新加载</button></div>
+
   return (
-    <div className="p-8 max-w-4xl">
+    <div className="p-4 sm:p-8 max-w-4xl">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">概览</h1>
         <p className="text-gray-500 mt-1">掌握您家的收纳状况</p>
