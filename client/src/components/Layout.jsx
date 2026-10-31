@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Outlet, NavLink } from 'react-router-dom'
 
 const navItems = [
@@ -8,6 +9,13 @@ const navItems = [
 ]
 
 export default function Layout() {
+  const [storage, setStorage] = useState(null)
+  useEffect(() => {
+    fetch('/api/storage').then(response => {
+      if (!response.ok) throw new Error('storage status unavailable')
+      return response.json()
+    }).then(setStorage).catch(() => setStorage({ unknown: true }))
+  }, [])
   return (
     <div className="flex flex-col md:flex-row h-dvh bg-gray-50 overflow-hidden">
       <aside className="w-full md:w-60 bg-white border-b md:border-b-0 md:border-r border-gray-100 flex flex-col flex-shrink-0">
@@ -48,6 +56,12 @@ export default function Layout() {
       </aside>
 
       <main className="flex-1 min-h-0 min-w-0 overflow-auto">
+        <div className="px-4 sm:px-8 py-3 border-b bg-white text-sm flex flex-wrap items-center gap-3">
+          <span className={storage?.temporary || storage?.unknown ? 'text-amber-800' : 'text-gray-600'}>
+            {!storage ? '正在检查存储状态…' : storage.unknown ? '无法确认数据保存状态，请稍后刷新。' : storage.temporary ? '免费试用：尚未连接云数据库，重启或重新部署可能清空记录，请先导出。' : storage.cloud ? '云数据库已连接，支持跨设备使用。' : '数据保存在当前服务器的 SQLite 文件中。'}
+          </span>
+          <a href="/api/backup" className="text-indigo-600 underline whitespace-nowrap">导出数据</a>
+        </div>
         <Outlet />
       </main>
     </div>

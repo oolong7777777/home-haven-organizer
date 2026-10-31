@@ -45,16 +45,29 @@ docker compose up -d --build
 
 备份前先停止服务，再复制数据库文件以及同目录中的 `-wal`、`-shm` 文件（如有）；恢复时保持服务停止并一起还原。不要把家庭数据文件提交到 GitHub。
 
-## 部署到 Render（获得在线网址）
+## 免费部署到 Render
 
-仓库包含 `render.yaml`，会创建一个 Node.js 服务和 1GB 持久化磁盘。该配置使用付费 Starter 服务和磁盘，请在 Render 的创建页面核对当前费用后再确认。这里只提供部署配置，不会自动开通或扣费。
+`render.yaml` 使用 **Free** 服务，不创建付费磁盘。Render 可能因空闲休眠，首次打开需要等待。平台仍可能要求账号验证；是否需要绑卡以 Render 当前账号页面为准，不要选择付费套餐。免费额度和条款以平台为准。
 
 1. 登录 https://dashboard.render.com ，选择 **New → Blueprint**。
-2. 连接本 GitHub 仓库，选择包含 `render.yaml` 的分支 `codex/mobile-and-docker-setup`（合并后也可选择 `main`）。
-3. 核对服务和磁盘费用，然后确认部署。等待状态变为 **Live**，点击 Render 提供的 `https://…onrender.com` 地址。
-4. 登录账号为 `haven`。密码在 Render 服务的 **Environment** 页面中查看 `BASIC_AUTH_PASSWORD`（自动生成），也可在那里改成长密码并重新部署。不要把密码发到聊天或提交到仓库。
-5. 用同一个网址和账号在手机、电脑登录，数据保存到服务器磁盘；浏览器关闭后仍然保留。
+2. 连接本 GitHub 仓库，选择 `codex/mobile-and-docker-setup` 分支（合并后也可用 `main`）。Blueprint Path 留空。
+3. 点击 Retry 重新读取配置，核对为 **Free** 且没有 Disk，再确认部署。如果仍显示 Starter 或磁盘，不要继续，先刷新配置。
+4. 等状态变为 **Live**，打开 Render 分配的 HTTPS 网址。
+5. 用户名为 `haven`；在服务 **Environment** 页面查看自动生成的 `BASIC_AUTH_PASSWORD`，或自行修改成长密码并重新部署。不要把密码发到聊天或提交到 GitHub。
 
-部署状态、构建错误和实际网址需要在 Render 页面核实。删除服务或磁盘会影响数据，请定期备份；磁盘不是备份。
+### 先试用，再连接免费云数据库
+
+未配置云数据库时，Render 使用 `/tmp/home-haven.sqlite`，这是临时数据，服务重启或重新部署可能清空。页面会显示提示，可点击“导出数据”下载 JSON 快照（当前未提供自动导入）。先用测试记录体验功能，不要把临时版本当作正式家庭档案。
+
+要长期保存并跨设备共用数据，可连接 Turso 提供的 SQLite 云数据库：
+
+1. 在 https://turso.tech 注册，核对并选择其免费计划，创建数据库。
+2. 在 Turso 获取数据库 URL 和访问 token。
+3. 在 Render 服务的 **Environment** 添加 `TURSO_DATABASE_URL`（通常为 `libsql://…turso.io`）和 `TURSO_AUTH_TOKEN`，保存并重新部署。两项必须一起设置。token 只填在 Render，不能提交到仓库或发送到聊天。
+4. 服务启动时自动建表；页面显示“云数据库已连接”后，用测试记录检查新增和刷新。云数据库不依赖 Render 的临时磁盘，手机电脑使用同一网址和家庭账号即可共用数据。
+
+连接云数据库不会自动迁移临时数据，应先导出。云数据库免费额度、暂停和保留规则以 Turso 当前条款为准；请定期导出备份。
+
+部署状态、构建错误和实际网址需要在 Render 页面核实。代码提交不等于已上线。
 
 GitHub 保存源代码，不会运行 Express 和 SQLite 后端。GitHub Pages 仅适合静态网页，本项目应部署在支持 Node.js 24 和持久化磁盘的服务器或 Docker 主机上。

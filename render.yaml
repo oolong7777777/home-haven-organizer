@@ -2,21 +2,17 @@ services:
   - type: web
     name: home-haven-organizer
     runtime: node
-    plan: starter
+    plan: free
     buildCommand: npm ci --prefix server && npm ci --prefix client && npm run build --prefix client
     startCommand: npm start
     healthCheckPath: /healthz
-    disk:
-      name: home-haven-data
-      mountPath: /var/data
-      sizeGB: 1
     envVars:
       - key: NODE_VERSION
         value: 24
       - key: NODE_ENV
         value: production
       - key: DATABASE_PATH
-        value: /var/data/database.sqlite
+        value: /tmp/home-haven.sqlite
       - key: BASIC_AUTH_USER
         value: haven
       - key: BASIC_AUTH_PASSWORD

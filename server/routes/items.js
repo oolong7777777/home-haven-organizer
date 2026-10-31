@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../database');
+const wrap = require('../wrap');
 
 const ITEM_JOIN = `
   SELECT i.*,
@@ -11,7 +12,7 @@ const ITEM_JOIN = `
   LEFT JOIN locations l ON i.location_id = l.id
 `;
 
-router.get('/', (req, res) => {
+router.get('/', wrap(async (req, res) => {
   const { q, category_id, location_id } = req.query;
   let query = ITEM_JOIN;
   const params = [];
@@ -27,36 +28,36 @@ router.get('/', (req, res) => {
   if (conditions.length) query += ' WHERE ' + conditions.join(' AND ');
   query += ' ORDER BY i.updated_at DESC';
 
-  res.json(db.prepare(query).all(...params));
-});
+  res.json(await db.prepare(query).all(...params));
+}));
 
-router.post('/', (req, res) => {
+router.post('/', wrap(async (req, res) => {
   const { name, description, quantity, unit, location_id, category_id, notes } = req.body;
   if (!name) return res.status(400).json({ error: '名称不能为空' });
-  const result = db.prepare(`
+  const result = await db.prepare(`
     INSERT INTO items (name, description, quantity, unit, location_id, category_id, notes)
     VALUES (?, ?, ?, ?, ?, ?, ?)
-  `).run(name, description || null, quantity || 1, unit || '个', location_id || null, category_id || null, notes || null);
+  `).run(name, description || null, quantity ?? 1, unit || '个', location_id || null, category_id || null, notes || null);
 
-  const item = db.prepare(ITEM_JOIN + ' WHERE i.id = ?').get(result.lastInsertRowid);
+  const item = await db.prepare(ITEM_JOIN + ' WHERE i.id = ?').get(result.lastInsertRowid);
   res.json(item);
-});
+}));
 
-router.put('/:id', (req, res) => {
+router.put('/:id', wrap(async (req, res) => {
   const { name, description, quantity, unit, location_id, category_id, notes } = req.body;
-  db.prepare(`
+  await db.prepare(`
     UPDATE items SET name=?, description=?, quantity=?, unit=?,
     location_id=?, category_id=?, notes=?, updated_at=CURRENT_TIMESTAMP
     WHERE id=?
-  `).run(name, description || null, quantity || 1, unit || '个', location_id || null, category_id || null, notes || null, req.params.id);
+  `).run(name, description || null, quantity ?? 1, unit || '个', location_id || null, category_id || null, notes || null, req.params.id);
 
-  const item = db.prepare(ITEM_JOIN + ' WHERE i.id = ?').get(req.params.id);
+  const item = await db.prepare(ITEM_JOIN + ' WHERE i.id = ?').get(req.params.id);
   res.json(item);
-});
+}));
 
-router.delete('/:id', (req, res) => {
-  db.prepare('DELETE FROM items WHERE id = ?').run(req.params.id);
+router.delete('/:id', wrap(async (req, res) => {
+  await db.prepare('DELETE FROM items WHERE id = ?').run(req.params.id);
   res.json({ success: true });
-});
+}));
 
 module.exports = router;

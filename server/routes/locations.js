@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../database');
+const wrap = require('../wrap');
 
-router.get('/', (req, res) => {
-  const locations = db.prepare(`
+router.get('/', wrap(async (req, res) => {
+  const locations = await db.prepare(`
     SELECT l.*, COUNT(i.id) as item_count
     FROM locations l
     LEFT JOIN items i ON i.location_id = l.id
@@ -11,10 +12,10 @@ router.get('/', (req, res) => {
     ORDER BY l.name
   `).all();
   res.json(locations);
-});
+}));
 
-router.get('/tree', (req, res) => {
-  const locations = db.prepare(`
+router.get('/tree', wrap(async (req, res) => {
+  const locations = await db.prepare(`
     SELECT l.*, COUNT(i.id) as item_count
     FROM locations l
     LEFT JOIN items i ON i.location_id = l.id
@@ -33,28 +34,28 @@ router.get('/tree', (req, res) => {
     }
   });
   res.json(roots);
-});
+}));
 
-router.post('/', (req, res) => {
+router.post('/', wrap(async (req, res) => {
   const { name, parent_id, type, description } = req.body;
   if (!name) return res.status(400).json({ error: '名称不能为空' });
-  const result = db.prepare('INSERT INTO locations (name, parent_id, type, description) VALUES (?, ?, ?, ?)').run(
+  const result = await db.prepare('INSERT INTO locations (name, parent_id, type, description) VALUES (?, ?, ?, ?)').run(
     name, parent_id || null, type || 'room', description || null
   );
   res.json({ id: result.lastInsertRowid, name, parent_id: parent_id || null, type: type || 'room', description, item_count: 0 });
-});
+}));
 
-router.put('/:id', (req, res) => {
+router.put('/:id', wrap(async (req, res) => {
   const { name, parent_id, type, description } = req.body;
-  db.prepare('UPDATE locations SET name = ?, parent_id = ?, type = ?, description = ? WHERE id = ?').run(
+  await db.prepare('UPDATE locations SET name = ?, parent_id = ?, type = ?, description = ? WHERE id = ?').run(
     name, parent_id || null, type || 'room', description || null, req.params.id
   );
   res.json({ success: true });
-});
+}));
 
-router.delete('/:id', (req, res) => {
-  db.prepare('DELETE FROM locations WHERE id = ?').run(req.params.id);
+router.delete('/:id', wrap(async (req, res) => {
+  await db.prepare('DELETE FROM locations WHERE id = ?').run(req.params.id);
   res.json({ success: true });
-});
+}));
 
 module.exports = router;

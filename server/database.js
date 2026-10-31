@@ -2,12 +2,20 @@ const { DatabaseSync } = require('node:sqlite');
 const path = require('path');
 
 const dbPath = process.env.DATABASE_PATH || path.join(__dirname, 'database.sqlite');
-const db = new DatabaseSync(dbPath);
+const { createRemoteDatabase } = require('./remote-database');
+if (!!process.env.TURSO_DATABASE_URL !== !!process.env.TURSO_AUTH_TOKEN) {
+  throw new Error('Set both TURSO_DATABASE_URL and TURSO_AUTH_TOKEN');
+}
+const db = process.env.TURSO_DATABASE_URL
+  ? createRemoteDatabase(process.env.TURSO_DATABASE_URL, process.env.TURSO_AUTH_TOKEN)
+  : new DatabaseSync(dbPath);
 
-db.exec('PRAGMA journal_mode = WAL');
-db.exec('PRAGMA foreign_keys = ON');
+async function initialize() {
 
-db.exec(`
+if (!process.env.TURSO_DATABASE_URL) await db.exec('PRAGMA journal_mode = WAL');
+await db.exec('PRAGMA foreign_keys = ON');
+
+await db.exec(`
   CREATE TABLE IF NOT EXISTS categories (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
@@ -39,15 +47,17 @@ db.exec(`
   );
 `);
 
-const catCount = db.prepare('SELECT COUNT(*) as count FROM categories').get();
+const catCount = await db.prepare('SELECT COUNT(*) as count FROM categories').get();
 if (catCount.count === 0) {
   const ins = db.prepare('INSERT INTO categories (name, color, icon) VALUES (?, ?, ?)');
-  ins.run('食品', '#ef4444', '🍎');
-  ins.run('衣物', '#8b5cf6', '👕');
-  ins.run('电器', '#3b82f6', '💻');
-  ins.run('书籍', '#f59e0b', '📚');
-  ins.run('日用品', '#10b981', '🧴');
-  ins.run('其他', '#6b7280', '📦');
+  await ins.run('食品', '#ef4444', '🍎');
+  await ins.run('衣物', '#8b5cf6', '👕');
+  await ins.run('电器', '#3b82f6', '💻');
+  await ins.run('书籍', '#f59e0b', '📚');
+  await ins.run('日用品', '#10b981', '🧴');
+  await ins.run('其他', '#6b7280', '📦');
 }
 
+}
+db.ready = initialize();
 module.exports = db;
