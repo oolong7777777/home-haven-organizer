@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { api } from '../api'
 import Modal from '../components/Modal'
 
@@ -12,7 +13,8 @@ export default function Items() {
   const [search, setSearch] = useState('')
   const [filterCat, setFilterCat] = useState('')
   const [filterLoc, setFilterLoc] = useState('')
-  const [modal, setModal] = useState(false)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [modal, setModal] = useState(() => searchParams.get('add') === '1')
   const [editItem, setEditItem] = useState(null)
   const [form, setForm] = useState(INIT)
   const [saving, setSaving] = useState(false)
@@ -32,6 +34,15 @@ export default function Items() {
     if (filterLoc && String(item.location_id) !== filterLoc) return false
     return true
   })
+
+  function closeModal() {
+    setModal(false)
+    if (searchParams.has('add')) {
+      const next = new URLSearchParams(searchParams)
+      next.delete('add')
+      setSearchParams(next, { replace: true })
+    }
+  }
 
   function openAdd() {
     setActionError('')
@@ -78,7 +89,7 @@ export default function Items() {
         const created = await api.items.create(data)
         setItems([created, ...items])
       }
-      setModal(false)
+      closeModal()
     } catch (err) {
       setActionError(err.message || '保存失败，请重试')
     } finally {
@@ -110,7 +121,7 @@ export default function Items() {
   )
 
   return (
-    <div className="p-4 sm:p-8">
+    <div className="haven-page">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">物品管理</h1>
@@ -175,7 +186,7 @@ export default function Items() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="haven-card-grid">
           {filtered.map(item => (
             <div key={item.id} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-shadow group">
               <div className="flex items-start justify-between mb-3">
@@ -245,7 +256,7 @@ export default function Items() {
       )}
 
       {modal && (
-        <Modal title={editItem ? '编辑物品' : '添加物品'} onClose={() => setModal(false)}>
+        <Modal title={editItem ? '编辑物品' : '添加物品'} onClose={closeModal}>
           <div className="space-y-4">
             {actionError && <p role="alert" className="text-sm text-red-600">{actionError}</p>}
             <div>
@@ -331,7 +342,7 @@ export default function Items() {
 
             <div className="flex gap-3 pt-2">
               <button
-                onClick={() => setModal(false)}
+                onClick={closeModal}
                 className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors"
               >
                 取消
