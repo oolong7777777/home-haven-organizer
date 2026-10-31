@@ -20,6 +20,7 @@ export default function Layout() {
     try { accept(await api.rooms.switch(id)) } catch (err) { setActionError(err.message) } finally { setSwitching(false) }
   }
   async function exportData() {
+    if (!account.activeRoom) return
     try { await api.downloadBackup() } catch (err) { setActionError(err.message) }
   }
   const [storage, setStorage] = useState(null)
@@ -38,7 +39,7 @@ export default function Layout() {
           <span className="haven-brand-icon" aria-hidden="true">🏠</span>
           <span className="haven-brand-copy"><strong>家物管家</strong><small>Home Haven</small></span>
         </NavLink>
-        <div className="haven-room-switch"><label htmlFor="active-room">当前房间</label><select id="active-room" disabled={switching} value={account.activeRoom?.id || ''} onChange={e => switchRoom(e.target.value)}>{account.rooms.map(room => <option key={room.id} value={room.id}>{room.name}</option>)}</select><NavLink to="/account">新建 / 加入房间</NavLink></div>
+        <div className="haven-room-switch"><label htmlFor="active-room">当前房间</label><select id="active-room" disabled={switching || !account.rooms.length} value={account.activeRoom?.id || ''} onChange={e => switchRoom(e.target.value)}>{!account.rooms.length && <option value="">暂无房间</option>}{account.rooms.map(room => <option key={room.id} value={room.id}>{room.name}</option>)}</select><NavLink to="/account">新建 / 加入房间</NavLink></div>
         <nav aria-label="主导航" className="haven-nav">
           {navItems.map(({ to, emoji, label }) => (
             <NavLink key={to} to={to} title={label} className={({ isActive }) => `haven-nav-link ${isActive ? 'is-active' : ''}`}>
@@ -54,7 +55,7 @@ export default function Layout() {
           <span className="haven-storage-message">
             {!storage ? '正在检查存储状态…' : storage.unknown ? '暂时无法确认数据保存状态，请刷新后重试。' : storage.temporary ? '试用存储 · 重启可能清空记录，请及时导出。' : storage.cloud ? '云端存储已连接' : '数据保存在当前服务器'}
           </span>
-          <button type="button" onClick={exportData} className="haven-export">导出当前房间 ↗</button>
+          <button type="button" disabled={!account.activeRoom} onClick={exportData} className="haven-export">导出当前房间 ↗</button>
         </div>
         {actionError && <p role="alert" className="haven-form-error">{actionError}</p>}
         <div key={account.activeRoom?.id}><Outlet /></div>

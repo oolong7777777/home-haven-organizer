@@ -230,3 +230,18 @@ button:disabled { opacity: .55; cursor: not-allowed; }
   .haven-account-section { padding: 20px 18px; }
   .haven-account-form input:not([type="checkbox"]), .haven-invite input { font-size: 16px; }
 }
+
+.haven-room-card { border: 1px solid #eceef5; border-radius: 12px; padding: 0 14px; }
+.haven-room-card .haven-room-row { border-bottom: 0; }
+.haven-room-actions { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 0 0 14px; }
+.haven-room-actions button { padding: 5px 0; font-size: 12px; color: #6558d9; min-height: 32px; }
+.haven-danger-text, .haven-room-actions .haven-danger-text { color: #c14545; }
+.haven-button-danger { background: #c74343; color: white; border-color: #c74343; }
+.haven-button-danger:hover { background: #af3535; }
+.haven-room-management-buttons, .haven-dialog-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.haven-dialog-actions > button { flex: 1; }
+.haven-delete-warning, .haven-remove-confirm { background: #fff3f1; color: #a5463e; padding: 16px; border-radius: 12px; font-size: 12px; line-height: 1.9; }
+.haven-remove-confirm .haven-room-management-buttons { margin-top: 14px; }
+.haven-managed-member { align-items: center; }
+.haven-managed-member button { font-size: 12px; flex-shrink: 0; min-height: 40px; padding: 6px; }
+.haven-no-rooms { padding: 24px 16px; color: #939aab; background: #f8f9fc; border-radius: 12px; margin-bottom: 24px; font-size: 13px; line-height: 1.9; }

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './AuthContext'
 import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
@@ -9,8 +9,10 @@ import Login from './pages/Login'
 import Account from './pages/Account'
 function Protected() {
   const { account, loading, error, refresh } = useAuth()
+  const location = useLocation()
   if (loading) return <div className="haven-auth-loading" role="status">正在检查登录状态…</div>
   if (error) return <div className="haven-auth-loading" role="alert"><p>{error}</p><button className="haven-button" onClick={refresh}>重新连接</button></div>
+  if (account && !account.activeRoom && location.pathname !== '/account') return <Navigate to="/account" replace />
   return account ? <Layout /> : <Navigate to="/login" replace />
 }
 export default function App() {

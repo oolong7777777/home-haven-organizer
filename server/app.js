@@ -34,6 +34,10 @@ function createApp(db, env = process.env) {
   app.post('/api/rooms/switch', wrap(accounts.switchRoom));
   app.post('/api/rooms/:id/invites', wrap(accounts.invite));
   app.get('/api/rooms/:id/members', wrap(accounts.members));
+  app.patch('/api/rooms/:id', wrap(accounts.editRoom));
+  app.delete('/api/rooms/:id', wrap(accounts.deleteRoom));
+  app.delete('/api/rooms/:id/members/:userId', wrap(accounts.removeMember));
+  app.get('/api/storage', wrap(async (req, res) => { await accounts.session(req); res.json({ cloud: !!env.TURSO_DATABASE_URL, temporary: env.RENDER === 'true' && !env.TURSO_DATABASE_URL }); }));
   app.use('/api', wrap(async (req, res, next) => { await accounts.authorize(req); next(); }));
   for (const [resource, save] of [['categories', 'categorySave'], ['locations', 'locationSave'], ['items', 'itemSave']]) {
     app.get(`/api/${resource}`, wrap(async (req, res) => res.json(await data[resource](req.room.id, req.query))));
@@ -49,14 +53,13 @@ function createApp(db, env = process.env) {
     res.json(roots);
   }));
   app.get('/api/stats', wrap(async (req, res) => res.json(await data.stats(req.room.id))));
-  app.get('/api/storage', (req, res) => res.json({ cloud: !!env.TURSO_DATABASE_URL, temporary: env.RENDER === 'true' && !env.TURSO_DATABASE_URL }));
   app.get('/api/backup', wrap(async (req, res) => res.attachment('home-haven-backup.json').json(await data.backup(req.room.id))));
   app.use('/api', (req, res) => res.status(404).json({ error: '接口不存在' }));
   const clientDist = path.join(__dirname, '../client/dist');
   if (fs.existsSync(clientDist)) { app.use(express.static(clientDist)); app.get('*', (req, res) => res.sendFile(path.join(clientDist, 'index.html'))); }
   app.use((err, req, res, next) => {
     if (!err.status || err.status >= 500) console.error('Request failed:', err.message);
-    res.status(err.status || 500).json({ error: err.status && err.status < 500 ? err.message : '操作失败，请稍后重试' });
+    res.status(err.status || 500).json({ error: err.status && err.status < 500 ? err.message : '操作失败，请稍后重试', ...(err.code === 'ROOM_UNAVAILABLE' ? { code: err.code } : {}) });
   });
   return app;
 }

@@ -29,5 +29,12 @@ test('legacy data stays with the established owner and migration is repeatable',
   assert.equal(db.prepare('SELECT COUNT(*) AS count FROM users').get().count, 1);
   assert.equal(db.prepare('SELECT password_hash FROM users WHERE id = ?').get(owner.id).password_hash, changedHash);
   assert.equal(db.prepare('SELECT COUNT(*) AS count FROM categories').get().count, 2);
+  // A deliberately deleted initial room must not be recreated from bootstrap credentials.
+  await db.batch([{ sql: 'DELETE FROM categories' }, { sql: 'DELETE FROM memberships' }, { sql: "DELETE FROM households WHERE id = 'home-legacy'" }]);
+  db.close();
+  db = createDatabase(env); await db.ready;
+  assert.equal(db.prepare('SELECT COUNT(*) AS count FROM households').get().count, 0);
+  assert.equal(db.prepare('SELECT COUNT(*) AS count FROM users').get().count, 1);
+  assert.equal(db.prepare('SELECT COUNT(*) AS count FROM categories').get().count, 0);
   db.close();
 });

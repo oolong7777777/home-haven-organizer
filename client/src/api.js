@@ -9,6 +9,7 @@ async function request(path, options = {}) {
   if (!res.ok) {
     const data = await res.json().catch(() => ({}))
     if (res.status === 401 && !path.startsWith('/auth/')) window.dispatchEvent(new Event('haven-session-expired'))
+    if (data.code === 'ROOM_UNAVAILABLE') window.dispatchEvent(new Event('haven-room-unavailable'))
     const error = new Error(data.error || `请求失败（${res.status}）`)
     error.status = res.status
     throw error
@@ -25,6 +26,9 @@ export const api = {
     password: data => request('/auth/password', { method: 'POST', body: data }),
   },
   rooms: {
+    update: (id, name) => request(`/rooms/${id}`, { method: 'PATCH', body: { name } }),
+    delete: (id, confirm_name) => request(`/rooms/${id}`, { method: 'DELETE', body: { confirm_name } }),
+    removeMember: (id, userId) => request(`/rooms/${id}/members/${userId}`, { method: 'DELETE' }),
     create: name => request('/rooms', { method: 'POST', body: { name } }),
     join: invite_code => request('/rooms/join', { method: 'POST', body: { invite_code } }),
     switch: room_id => request('/rooms/switch', { method: 'POST', body: { room_id } }),

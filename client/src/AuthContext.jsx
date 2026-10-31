@@ -24,7 +24,8 @@ export function AuthProvider({ children }) {
     refresh()
     const expired = () => { sessionStorage.removeItem('haven_room'); setAccount(null) }
     window.addEventListener('haven-session-expired', expired)
-    return () => window.removeEventListener('haven-session-expired', expired)
+    window.addEventListener('haven-room-unavailable', refresh)
+    return () => { window.removeEventListener('haven-session-expired', expired); window.removeEventListener('haven-room-unavailable', refresh) }
   }, [])
   async function logout() {
     await api.auth.logout()

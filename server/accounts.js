@@ -157,11 +157,57 @@ function createAccounts(db, env = process.env) {
     await room(user.id, req.params.id);
     res.json(await db.prepare('SELECT u.id, u.username, u.display_name, m.role FROM users u JOIN memberships m ON m.user_id = u.id WHERE m.household_id = ? ORDER BY m.role DESC, u.created_at').all(req.params.id));
   }
+  async function requireOwner(req) {
+    const user = await session(req);
+    const target = await room(user.id, req.params.id);
+    if (target.role !== 'owner') throw problem(403, '只有房间创建者可以管理房间');
+    return { user, target };
+  }
+  async function editRoom(req, res) {
+    const { user, target } = await requireOwner(req);
+    if (typeof req.body.name !== 'string' || !req.body.name.trim() || req.body.name.trim().length > 60) throw problem(400, '房间名称需为 1–60 个字符');
+    await db.prepare('UPDATE households SET name = ? WHERE id = ?').run(req.body.name.trim(), target.id);
+    res.json(await info(user));
+  }
+  function fallbackSessions(home, userId) {
+    return {
+      sql: `UPDATE sessions SET active_household_id = (SELECT m.household_id FROM memberships m JOIN households h ON h.id = m.household_id WHERE m.user_id = sessions.user_id AND m.household_id <> ? ORDER BY h.created_at, h.id LIMIT 1) WHERE active_household_id = ?${userId ? ' AND user_id = ?' : ''}`,
+      args: userId ? [home, home, userId] : [home, home],
+    };
+  }
+  async function removeMember(req, res) {
+    const { target } = await requireOwner(req);
+    const member = await db.prepare('SELECT user_id, role FROM memberships WHERE household_id = ? AND user_id = ?').get(target.id, req.params.userId);
+    if (!member) throw problem(404, '该成员已不在房间中');
+    if (member.role === 'owner') throw problem(400, '不能移除房间创建者');
+    await db.batch([
+      fallbackSessions(target.id, member.user_id),
+      { sql: 'DELETE FROM memberships WHERE household_id = ? AND user_id = ? AND role = ?', args: [target.id, member.user_id, 'member'] },
+      // Old unused invitations should not let a removed member immediately rejoin.
+      { sql: 'DELETE FROM invites WHERE household_id = ? AND consumed_by IS NULL', args: [target.id] },
+    ]);
+    res.json({ success: true });
+  }
+  async function deleteRoom(req, res) {
+    const { user, target } = await requireOwner(req);
+    if (req.body.confirm_name !== target.name) throw problem(400, '请输入完整房间名称以确认删除');
+    await db.batch([
+      fallbackSessions(target.id),
+      { sql: 'DELETE FROM items WHERE household_id = ?', args: [target.id] },
+      { sql: 'DELETE FROM locations WHERE household_id = ?', args: [target.id] },
+      { sql: 'DELETE FROM categories WHERE household_id = ?', args: [target.id] },
+      { sql: 'DELETE FROM invites WHERE household_id = ?', args: [target.id] },
+      { sql: 'DELETE FROM memberships WHERE household_id = ?', args: [target.id] },
+      { sql: 'DELETE FROM households WHERE id = ?', args: [target.id] },
+    ]);
+    res.json(await info(await session(req)));
+  }
   async function authorize(req) {
     req.account = await session(req);
     const requested = req.get('X-Room-Id');
-    req.room = await room(req.account.id, requested || req.account.active_household_id);
+    try { req.room = await room(req.account.id, requested || req.account.active_household_id); }
+    catch (err) { err.code = 'ROOM_UNAVAILABLE'; throw err; }
   }
-  return { session, info, room, listRooms, register, login, logout, changePassword, createRoom, switchRoom, joinRoom, invite, members, authorize };
+  return { session, info, room, listRooms, register, login, logout, changePassword, createRoom, switchRoom, joinRoom, invite, members, editRoom, removeMember, deleteRoom, authorize };
 }
 module.exports = { createAccounts, problem };

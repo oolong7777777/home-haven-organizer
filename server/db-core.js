@@ -24,6 +24,7 @@ function createDatabase(env = process.env) {
     if (!env.TURSO_DATABASE_URL) await db.exec('PRAGMA journal_mode = WAL');
     await db.exec('PRAGMA foreign_keys = ON');
     await db.exec(`
+      CREATE TABLE IF NOT EXISTS app_metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS households (id TEXT PRIMARY KEY, name TEXT NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, username TEXT NOT NULL UNIQUE COLLATE NOCASE, display_name TEXT NOT NULL, password_hash TEXT NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS memberships (user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, household_id TEXT NOT NULL REFERENCES households(id) ON DELETE CASCADE, role TEXT NOT NULL CHECK(role IN ('owner', 'member')), PRIMARY KEY(user_id, household_id));
@@ -44,7 +45,8 @@ function createDatabase(env = process.env) {
     for (const table of ['categories', 'locations', 'items']) legacyCount += (await db.prepare(`SELECT COUNT(*) AS count FROM ${table} WHERE household_id IS NULL`).get()).count;
     const legacyHome = 'home-legacy';
     const migrated = await db.prepare('SELECT id FROM households WHERE id = ?').get(legacyHome);
-    if (!migrated && (legacyCount || (env.BASIC_AUTH_USER && env.BASIC_AUTH_PASSWORD))) {
+    const migrationDone = await db.prepare("SELECT value FROM app_metadata WHERE key = 'legacy_room_migrated'").get();
+    if (!migrated && !migrationDone && (legacyCount || (env.BASIC_AUTH_USER && env.BASIC_AUTH_PASSWORD))) {
       if (!env.BASIC_AUTH_USER || !env.BASIC_AUTH_PASSWORD) throw new Error('Existing records require BASIC_AUTH_USER and BASIC_AUTH_PASSWORD for owner migration');
       const username = env.BASIC_AUTH_USER.trim().toLowerCase();
       const ownerId = randomUUID();
@@ -64,6 +66,9 @@ function createDatabase(env = process.env) {
         await db.prepare(`CREATE TRIGGER IF NOT EXISTS ${table}_legacy_room AFTER INSERT ON ${table} WHEN NEW.household_id IS NULL BEGIN UPDATE ${table} SET household_id = 'home-legacy' WHERE id = NEW.id; END`).run();
       }
       await db.batch(['categories', 'locations', 'items'].map(table => ({ sql: `UPDATE ${table} SET household_id = ? WHERE household_id IS NULL`, args: [legacyHome] })));
+    }
+    if (migrated || await db.prepare('SELECT id FROM households WHERE id = ?').get(legacyHome)) {
+      await db.prepare("INSERT OR IGNORE INTO app_metadata (key, value) VALUES ('legacy_room_migrated', '1')").run();
     }
     const now = Date.now();
     await db.prepare('DELETE FROM sessions WHERE expires_at < ?').run(now);
