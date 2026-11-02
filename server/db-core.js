@@ -43,6 +43,8 @@ function createDatabase(env = process.env) {
     const itemColumns = await db.prepare('PRAGMA table_info(items)').all();
     if (!itemColumns.some(column => column.name === 'photo_data')) await db.exec('ALTER TABLE items ADD COLUMN photo_data TEXT');
     if (!itemColumns.some(column => column.name === 'photo_version')) await db.exec('ALTER TABLE items ADD COLUMN photo_version TEXT');
+    if (!itemColumns.some(column => column.name === 'sort_order')) await db.exec('ALTER TABLE items ADD COLUMN sort_order REAL');
+    await db.prepare('UPDATE items SET sort_order = -id WHERE sort_order IS NULL').run();
     await db.exec('CREATE INDEX IF NOT EXISTS sessions_expiry ON sessions(expires_at)');
     let legacyCount = 0;
     for (const table of ['categories', 'locations', 'items']) legacyCount += (await db.prepare(`SELECT COUNT(*) AS count FROM ${table} WHERE household_id IS NULL`).get()).count;

@@ -44,6 +44,8 @@ function createApp(db, env = process.env) {
     res.type('image/jpeg').send(await data.photo(user.id, req.params.id));
   }));
   app.use('/api', wrap(async (req, res, next) => { await accounts.authorize(req); next(); }));
+  app.patch('/api/items/:id/quantity', wrap(async (req, res) => res.json(await data.changeQuantity(req.room.id, req.params.id, req.body.delta))));
+  app.patch('/api/items/:id/order', wrap(async (req, res) => res.json(await data.moveItem(req.room.id, req.params.id, req.body))));
   for (const [resource, save] of [['categories', 'categorySave'], ['locations', 'locationSave'], ['items', 'itemSave']]) {
     app.get(`/api/${resource}`, wrap(async (req, res) => res.json(await data[resource](req.room.id, req.query))));
     app.post(`/api/${resource}`, wrap(async (req, res) => res.status(201).json(await data[save](req.room.id, req.body))));

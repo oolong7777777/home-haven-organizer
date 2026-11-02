@@ -3,6 +3,9 @@ import { useSearchParams } from 'react-router-dom'
 import { api } from '../api'
 import Modal from '../components/Modal'
 import ItemPhoto from '../components/ItemPhoto'
+import ItemCard from '../components/ItemCard'
+import { DndContext, MouseSensor, TouchSensor, KeyboardSensor, useSensor, useSensors, closestCenter } from '@dnd-kit/core'
+import { SortableContext, rectSortingStrategy, sortableKeyboardCoordinates, arrayMove } from '@dnd-kit/sortable'
 
 const INIT = { name: '', description: '', quantity: 1, unit: '个', location_id: '', category_id: '', notes: '', photo_data: null }
 
@@ -22,6 +25,12 @@ export default function Items() {
   const [photoBusy, setPhotoBusy] = useState(false)
   const [error, setError] = useState(null)
   const [actionError, setActionError] = useState('')
+  const [cardBusy, setCardBusy] = useState(false)
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
 
   useEffect(() => {
     Promise.all([api.items.list(), api.categories.list(), api.locations.list()])
@@ -48,6 +57,7 @@ export default function Items() {
   }
 
   function openAdd() {
+    if (cardBusy) return
     setActionError('')
     setForm(INIT)
     setEditItem(null)
@@ -55,6 +65,7 @@ export default function Items() {
   }
 
   function openEdit(item) {
+    if (cardBusy) return
     setActionError('')
     setForm({
       name: item.name,
@@ -103,14 +114,58 @@ export default function Items() {
   }
 
   async function handleDelete(item) {
+    if (cardBusy) return
     if (!confirm(`确定删除「${item.name}」吗？`)) return
+    setCardBusy(true)
     try {
       await api.items.delete(item.id)
       setItems(items.filter(i => i.id !== item.id))
       setActionError('')
     } catch (err) {
       setActionError(err.message || '删除失败，请重试')
+    } finally { setCardBusy(false) }
+  }
+
+  function locationPath(item) {
+    const parts = [], seen = new Set()
+    let id = item.location_id
+    while (id && !seen.has(id)) {
+      seen.add(id)
+      const location = locations.find(row => row.id === id)
+      if (!location) break
+      parts.unshift(location.name); id = location.parent_id
     }
+    return parts.join(' › ')
+  }
+  async function changeQuantity(item, delta) {
+    if (cardBusy) return
+    setCardBusy(true); setActionError('')
+    try {
+      const updated = await api.items.quantity(item.id, delta)
+      setItems(rows => rows.map(row => row.id === updated.id ? updated : row))
+    } catch (err) { setActionError(err.message || '数量更新失败，请重试') }
+    finally { setCardBusy(false) }
+  }
+  async function moveItem(item, placement) {
+    if (cardBusy) return
+    const previous = items
+    const next = items.filter(row => row.id !== item.id)
+    let index = placement.edge === 'first' ? 0 : next.length
+    if (placement.before_id != null) index = next.findIndex(row => row.id === placement.before_id)
+    if (placement.after_id != null) index = next.findIndex(row => row.id === placement.after_id) + 1
+    next.splice(Math.max(0, index), 0, item)
+    setItems(next); setCardBusy(true); setActionError('')
+    try { setItems(await api.items.move(item.id, placement)) }
+    catch (err) { setItems(previous); setActionError(err.message || '顺序保存失败，请重试') }
+    finally { setCardBusy(false) }
+  }
+  function dragEnd({ active, over }) {
+    if (!over || active.id === over.id || cardBusy) return
+    const from = filtered.findIndex(row => row.id === active.id), to = filtered.findIndex(row => row.id === over.id)
+    if (from < 0 || to < 0) return
+    const reordered = arrayMove(filtered, from, to)
+    const next = reordered[to + 1], prev = reordered[to - 1]
+    moveItem(reordered[to], next ? { before_id: next.id } : { after_id: prev.id })
   }
 
   function setF(key, val) { setForm(f => ({ ...f, [key]: val })) }
@@ -134,6 +189,7 @@ export default function Items() {
         </div>
         <button
           onClick={openAdd}
+          disabled={cardBusy}
           className="bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors"
         >
           + 添加物品
@@ -191,74 +247,16 @@ export default function Items() {
           )}
         </div>
       ) : (
-        <div className="haven-card-grid">
-          {filtered.map(item => (
-            <div key={item.id} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-shadow group">
-              {item.photo_url && <img src={item.photo_url} alt={item.name} loading="lazy" className="haven-item-photo" />}
-              <div className="flex items-start justify-between mb-3">
-                <div
-                  className="w-11 h-11 rounded-xl flex items-center justify-center text-xl"
-                  style={{ backgroundColor: (item.category_color || '#6366f1') + '18' }}
-                >
-                  {item.category_icon || '📦'}
-                </div>
-                <div className="flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => openEdit(item)}
-                    title="编辑"
-                    className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors text-sm"
-                  >
-                    ✏️
-                  </button>
-                  <button
-                    onClick={() => handleDelete(item)}
-                    title="删除"
-                    className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors text-sm"
-                  >
-                    🗑️
-                  </button>
-                </div>
+        <>
+          <p className="haven-card-order-tip">拖动照片右上角的 ⠿ 调整顺序（手机／平板长按后拖动）；也可在 ⋮ 中移到最前或最后。顺序由当前房间成员共享。</p>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={dragEnd} accessibility={{ screenReaderInstructions: { draggable: '按空格开始排序，使用方向键移动，再按空格确认，按 Escape 取消。' } }}>
+            <SortableContext items={filtered.map(item => item.id)} strategy={rectSortingStrategy}>
+              <div className="haven-product-grid">
+                {filtered.map(item => <ItemCard key={item.id} item={item} location={locationPath(item)} busy={cardBusy} onEdit={openEdit} onDelete={handleDelete} onMove={moveItem} onQuantity={changeQuantity} />)}
               </div>
-
-              <h3 className="font-semibold text-gray-900 mb-1 leading-tight">{item.name}</h3>
-
-              {item.description && (
-                <p className="text-xs text-gray-400 mb-2 line-clamp-2">{item.description}</p>
-              )}
-
-              <div className="flex items-center justify-between mt-3">
-                <span className="text-sm font-semibold text-indigo-600">
-                  {item.quantity} {item.unit}
-                </span>
-                {item.location_name && (
-                  <span className="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-lg truncate ml-2 max-w-24">
-                    📍 {item.location_name}
-                  </span>
-                )}
-              </div>
-
-              {item.category_name && (
-                <div className="mt-2.5">
-                  <span
-                    className="text-xs px-2 py-0.5 rounded-full font-medium"
-                    style={{
-                      backgroundColor: (item.category_color || '#6366f1') + '18',
-                      color: item.category_color || '#6366f1',
-                    }}
-                  >
-                    {item.category_name}
-                  </span>
-                </div>
-              )}
-
-              {item.notes && (
-                <p className="text-xs text-gray-400 mt-2 border-t border-gray-50 pt-2 italic truncate">
-                  {item.notes}
-                </p>
-              )}
-            </div>
-          ))}
-        </div>
+            </SortableContext>
+          </DndContext>
+        </>
       )}
 
       {modal && (

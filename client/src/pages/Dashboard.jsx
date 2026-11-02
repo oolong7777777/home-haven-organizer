@@ -11,7 +11,7 @@ export default function Dashboard() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    Promise.all([api.stats(), api.items.list()])
+    Promise.all([api.stats(), api.items.list({ sort: 'recent' })])
       .then(([s, items]) => { setStats(s); setRecent(items.slice(0, 6)); setLoading(false) })
       .catch(err => { setError(err.message || '加载失败，请重试'); setLoading(false) })
   }, [])

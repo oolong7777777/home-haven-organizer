@@ -61,6 +61,8 @@ export const api = {
   },
 
   items: {
+    quantity: (id, delta) => request(`/items/${id}/quantity`, { method: 'PATCH', body: { delta } }),
+    move: (id, placement) => request(`/items/${id}/order`, { method: 'PATCH', body: placement }),
     list: (params = {}) => {
       const qs = new URLSearchParams(params).toString()
       return request(`/items${qs ? '?' + qs : ''}`)
