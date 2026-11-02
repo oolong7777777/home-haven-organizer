@@ -40,6 +40,9 @@ function createDatabase(env = process.env) {
       if (!columns.some(column => column.name === 'household_id')) await db.exec(`ALTER TABLE ${table} ADD COLUMN household_id TEXT REFERENCES households(id)`);
       await db.exec(`CREATE INDEX IF NOT EXISTS ${table}_household ON ${table}(household_id)`);
     }
+    const itemColumns = await db.prepare('PRAGMA table_info(items)').all();
+    if (!itemColumns.some(column => column.name === 'photo_data')) await db.exec('ALTER TABLE items ADD COLUMN photo_data TEXT');
+    if (!itemColumns.some(column => column.name === 'photo_version')) await db.exec('ALTER TABLE items ADD COLUMN photo_version TEXT');
     await db.exec('CREATE INDEX IF NOT EXISTS sessions_expiry ON sessions(expires_at)');
     let legacyCount = 0;
     for (const table of ['categories', 'locations', 'items']) legacyCount += (await db.prepare(`SELECT COUNT(*) AS count FROM ${table} WHERE household_id IS NULL`).get()).count;

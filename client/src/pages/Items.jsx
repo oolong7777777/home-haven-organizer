@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { api } from '../api'
 import Modal from '../components/Modal'
+import ItemPhoto from '../components/ItemPhoto'
 
-const INIT = { name: '', description: '', quantity: 1, unit: '个', location_id: '', category_id: '', notes: '' }
+const INIT = { name: '', description: '', quantity: 1, unit: '个', location_id: '', category_id: '', notes: '', photo_data: null }
 
 export default function Items() {
   const [items, setItems] = useState([])
@@ -18,6 +19,7 @@ export default function Items() {
   const [editItem, setEditItem] = useState(null)
   const [form, setForm] = useState(INIT)
   const [saving, setSaving] = useState(false)
+  const [photoBusy, setPhotoBusy] = useState(false)
   const [error, setError] = useState(null)
   const [actionError, setActionError] = useState('')
 
@@ -36,6 +38,7 @@ export default function Items() {
   })
 
   function closeModal() {
+    if (saving || photoBusy) return
     setModal(false)
     if (searchParams.has('add')) {
       const next = new URLSearchParams(searchParams)
@@ -61,13 +64,14 @@ export default function Items() {
       location_id: item.location_id ? String(item.location_id) : '',
       category_id: item.category_id ? String(item.category_id) : '',
       notes: item.notes || '',
+      photo_data: undefined,
     })
     setEditItem(item)
     setModal(true)
   }
 
   async function handleSave() {
-    if (!form.name.trim()) return
+    if (!form.name.trim() || photoBusy) return
     setActionError('')
     const quantity = Number(form.quantity)
     if (!Number.isInteger(quantity) || quantity < 0) {
@@ -89,7 +93,8 @@ export default function Items() {
         const created = await api.items.create(data)
         setItems([created, ...items])
       }
-      closeModal()
+      setModal(false)
+      if (searchParams.has('add')) { const next = new URLSearchParams(searchParams); next.delete('add'); setSearchParams(next, { replace: true }) }
     } catch (err) {
       setActionError(err.message || '保存失败，请重试')
     } finally {
@@ -189,6 +194,7 @@ export default function Items() {
         <div className="haven-card-grid">
           {filtered.map(item => (
             <div key={item.id} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-shadow group">
+              {item.photo_url && <img src={item.photo_url} alt={item.name} loading="lazy" className="haven-item-photo" />}
               <div className="flex items-start justify-between mb-3">
                 <div
                   className="w-11 h-11 rounded-xl flex items-center justify-center text-xl"
@@ -258,6 +264,7 @@ export default function Items() {
       {modal && (
         <Modal title={editItem ? '编辑物品' : '添加物品'} onClose={closeModal}>
           <div className="space-y-4">
+            <ItemPhoto value={form.photo_data} existingUrl={editItem?.photo_url} onChange={value => setF('photo_data', value)} onBusy={setPhotoBusy} disabled={saving} />
             {actionError && <p role="alert" className="text-sm text-red-600">{actionError}</p>}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">物品名称 <span className="text-red-400">*</span></label>
@@ -349,7 +356,7 @@ export default function Items() {
               </button>
               <button
                 onClick={handleSave}
-                disabled={!form.name.trim() || saving}
+                disabled={!form.name.trim() || saving || photoBusy}
                 className="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors disabled:opacity-40"
               >
                 {saving ? '保存中...' : '保存'}

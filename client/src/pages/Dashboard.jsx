@@ -52,7 +52,7 @@ export default function Dashboard() {
             <div className="haven-recent-list">
               {recent.map(item => (
                 <Link to="/items" key={item.id} className="haven-recent-row">
-                  <span className="haven-item-icon" style={{ backgroundColor: (item.category_color || '#6366f1') + '18' }} aria-hidden="true">{item.category_icon || '📦'}</span>
+                  <span className="haven-item-icon" style={{ backgroundColor: (item.category_color || '#6366f1') + '18' }} aria-hidden="true">{item.photo_url ? <img src={item.photo_url} alt="" loading="lazy" /> : item.category_icon || '📦'}</span>
                   <div className="haven-item-copy"><h3 title={item.name}>{item.name}</h3><div className="haven-item-meta"><span>{item.category_name || '未分类'}</span><span aria-hidden="true">·</span><span>{item.location_name || '未指定位置'}</span></div></div>
                   <span className="haven-item-quantity">{item.quantity} <small>{item.unit}</small></span>
                 </Link>

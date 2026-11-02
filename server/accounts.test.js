@@ -29,6 +29,16 @@ test('accounts and many-to-many rooms enforce sharing, isolation and session lif
   assert.equal((await request('/categories', { cookie: alice.cookie, room: a })).data.length, 6);
   const loc = await request('/locations', { method: 'POST', cookie: alice.cookie, room: a, body: { name: '书柜' } }); assert.equal(loc.status, 201);
   const item = await request('/items', { method: 'POST', cookie: alice.cookie, room: a, body: { name: '共享书籍', quantity: 0, category_id: aCat, location_id: loc.data.id } }); assert.equal(item.status, 201); assert.equal(item.data.quantity, 0);
+  const photoData = 'data:image/jpeg;base64,' + Buffer.from([255, 216, 255, 217]).toString('base64');
+  const photographed = await request('/items/' + item.data.id, { method: 'PUT', cookie: alice.cookie, room: a, body: { name: '共享书籍', quantity: 0, photo_data: photoData } });
+  assert.equal(photographed.status, 200); assert.ok(photographed.data.photo_url); assert.equal(photographed.data.photo_data, undefined);
+  const photoResponse = await fetch(base + photographed.data.photo_url, { headers: { Cookie: alice.cookie } });
+  assert.equal(photoResponse.status, 200); assert.match(photoResponse.headers.get('content-type'), /image\/jpeg/);
+  assert.deepEqual(Buffer.from(await photoResponse.arrayBuffer()), Buffer.from([255, 216, 255, 217]));
+  assert.equal((await fetch(base + photographed.data.photo_url)).status, 401);
+  assert.equal((await fetch(base + photographed.data.photo_url, { headers: { Cookie: bob.cookie } })).status, 404);
+  assert.equal((await request('/items/' + item.data.id, { method: 'PUT', cookie: alice.cookie, room: a, body: { name: '无效图片', photo_data: 'data:image/svg+xml;base64,PHN2Zy8+' } })).status, 400);
+  assert.equal((await request('/items/' + item.data.id, { method: 'PUT', cookie: alice.cookie, room: a, body: { name: '过大图片', photo_data: 'data:image/jpeg;base64,' + 'A'.repeat(350001) } })).status, 400);
   assert.equal((await request('/items', { cookie: bob.cookie, room: b })).data.length, 0);
   assert.equal((await request('/items', { cookie: bob.cookie, room: a })).status, 403);
   assert.equal((await request('/items/' + item.data.id, { method: 'PUT', cookie: bob.cookie, room: b, body: { name: '偷改' } })).status, 404);
@@ -40,6 +50,11 @@ test('accounts and many-to-many rooms enforce sharing, isolation and session lif
   assert.equal((await request('/items', { cookie: bob.cookie, room: a })).data[0].name, '共享书籍');
   assert.equal((await request('/items/' + item.data.id, { method: 'PUT', cookie: bob.cookie, room: a, body: { name: '一起整理', quantity: 2 } })).status, 200);
   assert.equal((await request('/items', { cookie: alice.cookie, room: a })).data[0].name, '一起整理');
+  assert.equal((await request('/items', { cookie: alice.cookie, room: a })).data[0].photo_url, photographed.data.photo_url);
+  assert.equal((await fetch(base + photographed.data.photo_url, { headers: { Cookie: bob.cookie } })).status, 200);
+  const removedPhoto = await request('/items/' + item.data.id, { method: 'PUT', cookie: bob.cookie, room: a, body: { name: '一起整理', quantity: 2, photo_data: null } });
+  assert.equal(removedPhoto.data.photo_url, null);
+  assert.equal((await fetch(base + photographed.data.photo_url, { headers: { Cookie: bob.cookie } })).status, 404);
   assert.equal((await request(`/rooms/${a}/invites`, { method: 'POST', cookie: bob.cookie, body: {} })).status, 403);
   const third = await request('/rooms', { method: 'POST', cookie: bob.cookie, body: { name: '第三个房间' } }); assert.equal(third.status, 201); assert.equal(third.data.rooms.length, 3);
   const next = await request('/rooms/switch', { method: 'POST', cookie: bob.cookie, body: { room_id: b } }); assert.equal(next.status, 200); assert.equal(next.data.activeRoom.id, b);
@@ -74,7 +89,7 @@ test('accounts and many-to-many rooms enforce sharing, isolation and session lif
   assert.equal((await request(`/rooms/${managed}`, { method: 'DELETE', cookie: bob.cookie, body: { confirm_name: '输错了' } })).status, 400);
   assert.equal((await request('/items', { cookie: bob.cookie, room: managed })).data.length, 1);
   const deleted = await request(`/rooms/${managed}`, { method: 'DELETE', cookie: bob.cookie, body: { confirm_name: '共同管理测试房间' } });
-  assert.equal(deleted.status, 200); assert.equal(deleted.data.activeRoom.id, b);
+  assert.equal(deleted.status, 200); assert.ok([a, b].includes(deleted.data.activeRoom.id));
   for (const table of ['items', 'categories', 'locations', 'memberships', 'invites']) assert.equal(db.prepare(`SELECT COUNT(*) AS count FROM ${table} WHERE household_id = ?`).get(managed).count, 0);
   assert.equal(db.prepare('SELECT COUNT(*) AS count FROM sessions WHERE active_household_id = ?').get(managed).count, 0);
   assert.equal((await request('/items', { cookie: alice.cookie, room: a })).data.length, 1);

@@ -22,6 +22,7 @@ function createApp(db, env = process.env) {
     }
     next();
   });
+  app.use('/api/items', express.json({ limit: '400kb' }));
   app.use(express.json({ limit: '32kb' }));
   app.post('/api/auth/register', wrap(accounts.register));
   app.post('/api/auth/login', wrap(accounts.login));
@@ -38,6 +39,10 @@ function createApp(db, env = process.env) {
   app.delete('/api/rooms/:id', wrap(accounts.deleteRoom));
   app.delete('/api/rooms/:id/members/:userId', wrap(accounts.removeMember));
   app.get('/api/storage', wrap(async (req, res) => { await accounts.session(req); res.json({ cloud: !!env.TURSO_DATABASE_URL, temporary: env.RENDER === 'true' && !env.TURSO_DATABASE_URL }); }));
+  app.get('/api/items/:id/photo', wrap(async (req, res) => {
+    const user = await accounts.session(req);
+    res.type('image/jpeg').send(await data.photo(user.id, req.params.id));
+  }));
   app.use('/api', wrap(async (req, res, next) => { await accounts.authorize(req); next(); }));
   for (const [resource, save] of [['categories', 'categorySave'], ['locations', 'locationSave'], ['items', 'itemSave']]) {
     app.get(`/api/${resource}`, wrap(async (req, res) => res.json(await data[resource](req.room.id, req.query))));
