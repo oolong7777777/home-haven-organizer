@@ -44,6 +44,7 @@ function createDatabase(env = process.env) {
     if (!itemColumns.some(column => column.name === 'photo_data')) await db.exec('ALTER TABLE items ADD COLUMN photo_data TEXT');
     if (!itemColumns.some(column => column.name === 'photo_version')) await db.exec('ALTER TABLE items ADD COLUMN photo_version TEXT');
     if (!itemColumns.some(column => column.name === 'sort_order')) await db.exec('ALTER TABLE items ADD COLUMN sort_order REAL');
+    if (!itemColumns.some(column => column.name === 'expires_on')) await db.exec('ALTER TABLE items ADD COLUMN expires_on TEXT');
     await db.prepare('UPDATE items SET sort_order = -id WHERE sort_order IS NULL').run();
     await db.exec('CREATE INDEX IF NOT EXISTS sessions_expiry ON sessions(expires_at)');
     let legacyCount = 0;

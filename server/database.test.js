@@ -76,3 +76,15 @@ test('smart search covers all fields, ancestor locations and cross-field keyword
   for (const query of ['厨房', '主卧 抽纸', 'grape', '旅行 食品']) assert.equal(matchesItem(item, query, location), false, query);
   assert.doesNotThrow(() => locationPaths([{ id: 1, name: '循环位置', parent_id: 1 }]));
 });
+
+test('expiry dates validate calendar days and show Shanghai expiry states', () => {
+  const { validExpiry, expiryStatus, shanghaiDate } = require('../shared/item-expiry.mjs');
+  for (const date of [null, '2028-02-29', '2026-12-31']) assert.equal(validExpiry(date), true);
+  for (const date of ['', '2027-02-29', '2026-04-31', '2026-13-01', '2026-1-2', true, '0000-01-01']) assert.equal(validExpiry(date), false);
+  assert.equal(shanghaiDate(new Date('2026-11-03T16:00:00Z')), '2026-11-04');
+  assert.equal(expiryStatus(null, '2026-11-03').badge, '永久');
+  assert.equal(expiryStatus('2026-11-02', '2026-11-03').tone, 'expired');
+  assert.equal(expiryStatus('2026-11-03', '2026-11-03').badge, '今日到期');
+  assert.equal(expiryStatus('2026-12-03', '2026-11-03').tone, 'soon');
+  assert.equal(expiryStatus('2026-12-04', '2026-11-03').tone, 'valid');
+});

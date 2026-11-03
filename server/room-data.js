@@ -1,3 +1,4 @@
+const { validExpiry } = require('../shared/item-expiry.mjs');
 const { matchesItem, locationPaths } = require('../shared/item-search.mjs');
 const { randomUUID } = require('node:crypto');
 const { problem } = require('./accounts');
@@ -32,9 +33,11 @@ function createRoomData(db) {
     }
     return { ...await own('categories', id, home), item_count: (await db.prepare('SELECT COUNT(*) AS count FROM items WHERE category_id = ? AND household_id = ?').get(id, home)).count };
   }
-  const itemJoin = `SELECT i.id, i.name, i.description, i.quantity, i.unit, i.location_id, i.category_id, i.notes, i.created_at, i.updated_at, i.household_id, i.sort_order, CASE WHEN i.photo_data IS NOT NULL THEN '/api/items/' || i.id || '/photo?v=' || i.photo_version ELSE NULL END AS photo_url, c.name AS category_name, c.color AS category_color, c.icon AS category_icon, l.name AS location_name FROM items i LEFT JOIN categories c ON c.id = i.category_id AND c.household_id = i.household_id LEFT JOIN locations l ON l.id = i.location_id AND l.household_id = i.household_id`;
+  const itemJoin = `SELECT i.id, i.name, i.description, i.quantity, i.unit, i.location_id, i.category_id, i.notes, i.created_at, i.updated_at, i.household_id, i.sort_order, i.expires_on, CASE WHEN i.photo_data IS NOT NULL THEN '/api/items/' || i.id || '/photo?v=' || i.photo_version ELSE NULL END AS photo_url, c.name AS category_name, c.color AS category_color, c.icon AS category_icon, l.name AS location_name FROM items i LEFT JOIN categories c ON c.id = i.category_id AND c.household_id = i.household_id LEFT JOIN locations l ON l.id = i.location_id AND l.household_id = i.household_id`;
   async function itemSave(home, data, id) {
-    if (id) await own('items', id, home);
+    const existing = id ? await own('items', id, home) : null;
+    const expires = Object.prototype.hasOwnProperty.call(data, 'expires_on') ? data.expires_on : existing?.expires_on ?? null;
+    if (!validExpiry(expires)) throw problem(400, '请选择永久有效，或填写有效的到期日期');
     const hasPhoto = Object.prototype.hasOwnProperty.call(data, 'photo_data');
     if (hasPhoto && data.photo_data !== null) {
       if (typeof data.photo_data !== 'string' || !/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(data.photo_data) || data.photo_data.length > 350000) throw problem(400, '照片格式无效，请重新选择照片');
@@ -45,9 +48,9 @@ function createRoomData(db) {
     if (!Number.isSafeInteger(quantity) || quantity < 0) throw problem(400, '数量必须是非负整数');
     if (data.category_id) await own('categories', data.category_id, home);
     if (data.location_id) await own('locations', data.location_id, home);
-    const values = [name(data.name), typeof data.description === 'string' ? data.description.slice(0, 5000) : null, quantity, typeof data.unit === 'string' ? data.unit.slice(0, 20) : '个', data.location_id || null, data.category_id || null, typeof data.notes === 'string' ? data.notes.slice(0, 5000) : null];
-    if (id) await db.prepare('UPDATE items SET name = ?, description = ?, quantity = ?, unit = ?, location_id = ?, category_id = ?, notes = ?, updated_at = CURRENT_TIMESTAMP, photo_data = CASE WHEN ? THEN ? ELSE photo_data END, photo_version = CASE WHEN ? THEN ? ELSE photo_version END WHERE id = ? AND household_id = ?').run(...values, hasPhoto ? 1 : 0, data.photo_data ?? null, hasPhoto ? 1 : 0, randomUUID(), id, home);
-    else id = (await db.prepare('INSERT INTO items (name, description, quantity, unit, location_id, category_id, notes, household_id, photo_data, photo_version, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, (SELECT COALESCE(MIN(sort_order), 0) - 1024 FROM items WHERE household_id = ?))').run(...values, home, data.photo_data ?? null, randomUUID(), home)).lastInsertRowid;
+    const values = [name(data.name), typeof data.description === 'string' ? data.description.slice(0, 5000) : null, quantity, typeof data.unit === 'string' ? data.unit.slice(0, 20) : '个', data.location_id || null, data.category_id || null, typeof data.notes === 'string' ? data.notes.slice(0, 5000) : null, expires];
+    if (id) await db.prepare('UPDATE items SET name = ?, description = ?, quantity = ?, unit = ?, location_id = ?, category_id = ?, notes = ?, expires_on = ?, updated_at = CURRENT_TIMESTAMP, photo_data = CASE WHEN ? THEN ? ELSE photo_data END, photo_version = CASE WHEN ? THEN ? ELSE photo_version END WHERE id = ? AND household_id = ?').run(...values, hasPhoto ? 1 : 0, data.photo_data ?? null, hasPhoto ? 1 : 0, randomUUID(), id, home);
+    else id = (await db.prepare('INSERT INTO items (name, description, quantity, unit, location_id, category_id, notes, expires_on, household_id, photo_data, photo_version, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, (SELECT COALESCE(MIN(sort_order), 0) - 1024 FROM items WHERE household_id = ?))').run(...values, home, data.photo_data ?? null, randomUUID(), home)).lastInsertRowid;
     return db.prepare(itemJoin + ' WHERE i.id = ? AND i.household_id = ?').get(id, home);
   }
   async function locationSave(home, data, id) {

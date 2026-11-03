@@ -372,3 +372,54 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 @media print { .haven-item-detail .haven-form-success { display: none !important; } }
 
 .haven-search-help { color: #929daf; font-size: 11px; line-height: 1.7; margin: -10px 0 18px; }
+
+/* The image must not contribute its intrinsic height to the grid row. */
+.haven-product-grid { align-items: start; }
+.haven-product-media { width: 100%; height: 0; min-height: 0; padding-bottom: 65%; aspect-ratio: auto; flex: 0 0 auto; }
+.haven-product-media > img, .haven-product-no-photo { position: absolute; inset: 0; display: block; width: 100%; height: 100%; max-height: 100%; object-fit: cover; }
+.haven-product-no-photo { display: flex; }
+.haven-product-content { flex: none; display: grid; grid-template-rows: 22px 32px 18px 24px 38px; gap: 6px; padding: 12px; }
+.haven-product-content h3 { display: block; font-size: 16px; line-height: 22px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.haven-product-summary { min-width: 0; font-size: 12px; line-height: 16px; color: #7b879a; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.haven-product-expiry { font-size: 11px; line-height: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #8490a3; }
+.haven-product-expiry.is-permanent { color: #0a9a70; }
+.haven-product-expiry.is-soon { color: #bb7b15; }
+.haven-product-expiry.is-expired { color: #cf4d4d; }
+.haven-product-meta { min-width: 0; display: flex; align-items: center; gap: 8px; overflow: hidden; }
+.haven-product-category { flex-shrink: 0; max-width: 65%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; line-height: 20px; padding: 0 8px; border-radius: 14px; }
+.haven-product-brief { min-width: 0; font-size: 10px; color: #9aa4b4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.haven-product-quantity { margin-top: 0; min-height: 38px; border-radius: 11px; }
+.haven-product-quantity button { width: 40px; min-height: 36px; font-size: 20px; }
+.haven-product-drag { top: auto; right: auto; left: 8px; bottom: 8px; width: 34px; height: 34px; font-size: 21px; }
+.haven-product-tools { right: 8px; bottom: 8px; }
+.haven-product-menu-toggle { width: 34px; height: 34px; font-size: 24px; }
+.haven-product-menu { top: 40px; }
+.haven-expiry-badge { position: absolute; top: 10px; right: 10px; font-size: 11px; line-height: 1.4; border-radius: 18px; padding: 4px 9px; color: #fff; background: #8496b0; }
+.haven-expiry-badge.is-permanent { background: #00b98a; }
+.haven-expiry-badge.is-valid { background: #6c92b6; }
+.haven-expiry-badge.is-soon { background: #d99320; }
+.haven-expiry-badge.is-expired { background: #d55b5b; }
+.haven-expiry-editor { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; min-width: 0; border: 1px solid #e7eaf2; border-radius: 12px; padding: 14px; }
+.haven-expiry-editor legend { font-size: 13px; color: #62708a; padding: 0 5px; }
+.haven-expiry-editor label { display: grid; gap: 6px; font-size: 12px; color: #7c879a; min-width: 0; }
+.haven-expiry-editor input, .haven-expiry-editor select { width: 100%; min-width: 0; padding: 10px; border: 1px solid #e0e4ee; border-radius: 9px; background: white; color: #344158; font-size: 13px; }
+.haven-expiry-editor p { grid-column: 1 / -1; color: #99a1b0; font-size: 10px; line-height: 1.7; }
+@media (max-width: 767px) {
+  .haven-product-media { height: 0; aspect-ratio: auto; padding-bottom: 65%; }
+  .haven-product-content { padding: 10px; grid-template-rows: 20px 30px 16px 20px 34px; gap: 5px; }
+  .haven-product-content h3 { font-size: 14px; line-height: 20px; }
+  .haven-product-summary { font-size: 10px; line-height: 15px; }
+  .haven-product-expiry { font-size: 9px; line-height: 16px; }
+  .haven-product-category { font-size: 9px; line-height: 18px; padding: 0 6px; }
+  .haven-product-brief { font-size: 9px; }
+  .haven-product-meta { gap: 5px; }
+  .haven-product-quantity { min-height: 34px; }
+  .haven-product-quantity button { min-height: 32px; width: 30px; font-size: 18px; }
+  .haven-expiry-badge { top: 8px; right: 8px; font-size: 9px; padding: 3px 7px; }
+  .haven-product-drag { left: 6px; bottom: 6px; width: 30px; height: 30px; }
+  .haven-product-tools { bottom: 6px; right: 6px; }
+  .haven-product-menu-toggle { width: 30px; height: 30px; }
+  .haven-product-menu { top: 36px; }
+  .haven-expiry-editor { grid-template-columns: minmax(0, 1fr); }
+  .haven-expiry-editor input, .haven-expiry-editor select { font-size: 16px; }
+}

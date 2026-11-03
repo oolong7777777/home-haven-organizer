@@ -3,6 +3,8 @@ import { Link, useParams } from 'react-router-dom'
 import QRCode from 'qrcode'
 import { api } from '../api'
 import ItemPhoto from '../components/ItemPhoto'
+import ItemExpiry from '../components/ItemExpiry'
+import { validExpiry } from '../../../shared/item-expiry.mjs'
 import { locationPaths } from '../../../shared/item-search.mjs'
 
 export default function ItemDetail() {
@@ -17,7 +19,7 @@ export default function ItemDetail() {
   const [form, setForm] = useState(null)
   const [dirty, setDirty] = useState(false)
   const [message, setMessage] = useState('')
-  function fill(item) { return { name: item.name, description: item.description || '', notes: item.notes || '', quantity: item.quantity, unit: item.unit || '个', category_id: item.category_id ? String(item.category_id) : '', location_id: item.location_id ? String(item.location_id) : '', photo_data: undefined } }
+  function fill(item) { return { name: item.name, description: item.description || '', notes: item.notes || '', quantity: item.quantity, unit: item.unit || '个', category_id: item.category_id ? String(item.category_id) : '', location_id: item.location_id ? String(item.location_id) : '', photo_data: undefined, expires_on: item.expires_on ?? null } }
   function setField(key, value) { setForm(current => ({ ...current, [key]: value })); setDirty(true); setMessage('') }
   const link = `${window.location.origin}/items/${encodeURIComponent(id)}`
   useEffect(() => {
@@ -37,6 +39,7 @@ export default function ItemDetail() {
     if (busy || photoBusy) return
     const quantity = Number(form.quantity)
     if (!Number.isSafeInteger(quantity) || quantity < 0) { setError('数量必须是非负整数'); return }
+    if (!validExpiry(form.expires_on)) { setError('请选择有效的到期日期'); return }
     setBusy(true); setError(''); setMessage('')
     try {
       const item = await api.items.update(record.item.id, { ...form, quantity, name: form.name.trim(), location_id: form.location_id ? Number(form.location_id) : null, category_id: form.category_id ? Number(form.category_id) : null }, record.room.id)
@@ -78,6 +81,7 @@ export default function ItemDetail() {
           <ItemPhoto value={form.photo_data} existingUrl={item.photo_url} onChange={value => setField('photo_data', value)} onBusy={setPhotoBusy} disabled={busy} />
           <label>物品名称<input required maxLength={120} value={form.name} disabled={busy} onChange={e => setField('name', e.target.value)} /></label>
           <div className="haven-editor-row"><label>数量<input type="number" min="0" step="1" max={Number.MAX_SAFE_INTEGER} required value={form.quantity} disabled={busy} onChange={e => setField('quantity', e.target.value)} /></label><label>单位<input maxLength={20} value={form.unit} disabled={busy} onChange={e => setField('unit', e.target.value)} /></label></div>
+          <ItemExpiry value={form.expires_on} onChange={value => setField('expires_on', value)} disabled={busy} />
           <label>存放位置<select value={form.location_id} disabled={busy} onChange={e => setField('location_id', e.target.value)}><option value="">未指定位置</option>{locations.map(location => <option key={location.id} value={String(location.id)}>{paths.get(String(location.id))}</option>)}</select></label>
           <label>分类<select value={form.category_id} disabled={busy} onChange={e => setField('category_id', e.target.value)}><option value="">未分类</option>{categories.map(category => <option key={category.id} value={String(category.id)}>{category.icon} {category.name}</option>)}</select></label>
           <label>描述<textarea rows={3} maxLength={5000} value={form.description} disabled={busy} onChange={e => setField('description', e.target.value)} /></label>

@@ -3,12 +3,14 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import Modal from '../components/Modal'
 import ItemPhoto from '../components/ItemPhoto'
+import ItemExpiry from '../components/ItemExpiry'
+import { validExpiry } from '../../../shared/item-expiry.mjs'
 import ItemCard from '../components/ItemCard'
 import { matchesItem, locationPaths } from '../../../shared/item-search.mjs'
 import { DndContext, MouseSensor, TouchSensor, KeyboardSensor, useSensor, useSensors, closestCenter } from '@dnd-kit/core'
 import { SortableContext, rectSortingStrategy, sortableKeyboardCoordinates, arrayMove } from '@dnd-kit/sortable'
 
-const INIT = { name: '', description: '', quantity: 1, unit: '个', location_id: '', category_id: '', notes: '', photo_data: null }
+const INIT = { name: '', description: '', quantity: 1, unit: '个', location_id: '', category_id: '', notes: '', photo_data: null, expires_on: null }
 
 export default function Items() {
   const navigate = useNavigate()
@@ -77,6 +79,7 @@ export default function Items() {
       setActionError('数量必须是大于或等于 0 的整数')
       return
     }
+    if (!validExpiry(form.expires_on)) { setActionError('请选择有效的到期日期'); return }
     setSaving(true)
     try {
       const data = {
@@ -234,7 +237,7 @@ export default function Items() {
         </div>
       ) : (
         <>
-          <p className="haven-card-order-tip">拖动照片右上角的 ⠿ 调整顺序（手机／平板长按后拖动）；也可在 ⋮ 中移到最前或最后。顺序由当前房间成员共享。</p>
+          <p className="haven-card-order-tip">拖动照片左下角的 ⠿ 调整顺序（手机／平板长按后拖动）；也可在 ⋮ 中移到最前或最后。顺序由当前房间成员共享。</p>
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={dragEnd} accessibility={{ screenReaderInstructions: { draggable: '按空格开始排序，使用方向键移动，再按空格确认，按 Escape 取消。' } }}>
             <SortableContext items={filtered.map(item => item.id)} strategy={rectSortingStrategy}>
               <div className="haven-product-grid">
@@ -249,6 +252,7 @@ export default function Items() {
         <Modal title="添加物品" onClose={closeModal}>
           <div className="space-y-4">
             <ItemPhoto value={form.photo_data} onChange={value => setF('photo_data', value)} onBusy={setPhotoBusy} disabled={saving} />
+            <ItemExpiry value={form.expires_on} onChange={value => setF('expires_on', value)} disabled={saving} />
             {actionError && <p role="alert" className="text-sm text-red-600">{actionError}</p>}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">物品名称 <span className="text-red-400">*</span></label>

@@ -38,8 +38,13 @@ test('accounts and many-to-many rooms enforce sharing, isolation and session lif
   const searchByLocation = await request('/items?q=' + encodeURIComponent('书柜'), { cookie: alice.cookie, room: a });
   assert.equal(searchByLocation.data[0].id, item.data.id);
   assert.equal((await request('/items?q=' + encodeURIComponent('书柜'), { cookie: bob.cookie, room: b })).data.length, 0);
+  const dated = await request('/items/' + item.data.id, { method: 'PUT', cookie: alice.cookie, room: a, body: { name: '共享书籍', quantity: 0, expires_on: '2028-02-29' } });
+  assert.equal(dated.status, 200); assert.equal(dated.data.expires_on, '2028-02-29');
+  assert.equal((await request('/items/' + item.data.id, { method: 'PUT', cookie: alice.cookie, room: a, body: { name: '无效期限', expires_on: '2027-02-29' } })).status, 400);
+  assert.equal((await request('/items/' + item.data.id, { method: 'PUT', cookie: bob.cookie, room: b, body: { name: '越权期限', expires_on: null } })).status, 404);
   const photoData = 'data:image/jpeg;base64,' + Buffer.from([255, 216, 255, 217]).toString('base64');
   const photographed = await request('/items/' + item.data.id, { method: 'PUT', cookie: alice.cookie, room: a, body: { name: '共享书籍', quantity: 0, photo_data: photoData } });
+  assert.equal(photographed.data.expires_on, '2028-02-29');
   assert.equal(photographed.status, 200); assert.ok(photographed.data.photo_url); assert.equal(photographed.data.photo_data, undefined);
   const photoResponse = await fetch(base + photographed.data.photo_url, { headers: { Cookie: alice.cookie } });
   assert.equal(photoResponse.status, 200); assert.match(photoResponse.headers.get('content-type'), /image\/jpeg/);
@@ -63,6 +68,8 @@ test('accounts and many-to-many rooms enforce sharing, isolation and session lif
   assert.equal((await fetch(base + photographed.data.photo_url, { headers: { Cookie: bob.cookie } })).status, 200);
   const removedPhoto = await request('/items/' + item.data.id, { method: 'PUT', cookie: bob.cookie, room: a, body: { name: '一起整理', quantity: 2, photo_data: null } });
   assert.equal(removedPhoto.data.photo_url, null);
+  const permanent = await request('/items/' + item.data.id, { method: 'PUT', cookie: bob.cookie, room: a, body: { name: '一起整理', quantity: 2, expires_on: null } });
+  assert.equal(permanent.status, 200); assert.equal(permanent.data.expires_on, null);
   assert.equal((await fetch(base + photographed.data.photo_url, { headers: { Cookie: bob.cookie } })).status, 404);
   assert.equal((await request(`/rooms/${a}/invites`, { method: 'POST', cookie: bob.cookie, body: {} })).status, 403);
   const third = await request('/rooms', { method: 'POST', cookie: bob.cookie, body: { name: '第三个房间' } }); assert.equal(third.status, 201); assert.equal(third.data.rooms.length, 3);
