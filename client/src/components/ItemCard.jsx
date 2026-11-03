@@ -35,7 +35,10 @@ export default function ItemCard({ item, location, busy, onDelete, onMove, onQua
     </div>
     <div className="haven-product-content">
       <h3 title={item.name}><Link to={`/items/${item.id}`}>{item.name}</Link></h3>
-      <p className="haven-product-summary" title={[item.description, location].filter(Boolean).join(' · ')}>{[item.description, location || '未指定位置'].filter(Boolean).join(' · ')}</p>
+      <div className="haven-product-summary">
+        <p className="haven-product-place" title={location || '未指定位置'}>📍 {location || '未指定位置'}</p>
+        <p className="haven-product-caption" title={item.description || ''}>{item.description || ''}</p>
+      </div>
       <p className={`haven-product-expiry is-${expiry.tone}`}>{expiry.text}</p>
       <div className="haven-product-meta"><span className="haven-product-category" style={{ color: item.category_color || '#64748b', backgroundColor: (item.category_color || '#64748b') + '12' }}>{item.category_icon || '🏷️'} {item.category_name || '未分类'}</span>{item.notes && <span className="haven-product-brief" title={item.notes}>{item.notes}</span>}</div>
       <div className="haven-product-quantity" aria-label={`${item.name}的数量`}>

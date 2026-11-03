@@ -423,3 +423,12 @@ button:disabled { opacity: .55; cursor: not-allowed; }
   .haven-expiry-editor { grid-template-columns: minmax(0, 1fr); }
   .haven-expiry-editor input, .haven-expiry-editor select { font-size: 16px; }
 }
+
+.haven-product-summary { display: grid; grid-template-rows: 16px 16px; -webkit-line-clamp: unset; }
+.haven-product-place, .haven-product-caption { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 16px; }
+.haven-product-place { color: #76849a; }
+.haven-product-caption { color: #99a3b3; }
+@media (max-width: 767px) {
+  .haven-product-summary { grid-template-rows: 15px 15px; }
+  .haven-product-place, .haven-product-caption { line-height: 15px; }
+}
