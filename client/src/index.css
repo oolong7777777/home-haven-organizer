@@ -333,3 +333,42 @@ button:disabled { opacity: .55; cursor: not-allowed; }
   .haven-item-detail .haven-qr-label strong { font-size: 11pt; }
   .haven-item-detail .haven-qr-label small { font-size: 8pt; }
 }
+
+/* Compact photo cards: keep two usable columns on phones. */
+.haven-product-media { aspect-ratio: 4 / 3; }
+@media (max-width: 767px) {
+  .haven-product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .haven-product-card { border-radius: 15px; }
+  .haven-product-media { aspect-ratio: 4 / 3; border-radius: 14px 14px 0 0; }
+  .haven-product-content { padding: 10px; }
+  .haven-product-content h3 { font-size: 14px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .haven-product-location { font-size: 10px; line-height: 1.5; margin-top: 5px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .haven-product-description { font-size: 10px; -webkit-line-clamp: 1; margin-top: 4px; }
+  .haven-product-tags { margin: 8px 0 10px; gap: 4px; }
+  .haven-product-tags > span { padding: 3px 7px; font-size: 10px; }
+  .haven-product-notes { display: none; }
+  .haven-product-count { top: 8px; left: 8px; font-size: 11px; padding: 3px 8px; }
+  .haven-product-drag { top: 6px; right: 6px; width: 34px; height: 34px; font-size: 22px; }
+  .haven-product-tools { right: 6px; bottom: 6px; }
+  .haven-product-menu-toggle { width: 34px; height: 34px; font-size: 24px; }
+  .haven-product-menu { top: 40px; width: 148px; }
+  .haven-product-menu a, .haven-product-menu button { font-size: 12px; padding: 10px; }
+  .haven-product-quantity { min-height: 36px; border-radius: 10px; }
+  .haven-product-quantity button { width: 32px; min-height: 36px; font-size: 18px; }
+  .haven-product-quantity output { font-size: 13px; }
+  .haven-product-quantity output small { font-size: 9px; margin-left: 3px; }
+  .haven-card-order-tip { font-size: 10px; margin-bottom: 12px; }
+}
+@media (max-width: 319px) { .haven-product-grid { grid-template-columns: minmax(0, 1fr); } }
+.haven-detail-editor { padding: 24px; }
+.haven-editor-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.haven-editor-heading h2 { font-size: 16px; font-weight: 650; }
+.haven-editor-heading span { font-size: 11px; color: #939eae; }
+.haven-editor-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.haven-detail-editor select, .haven-detail-editor textarea { min-width: 0; width: 100%; border: 1px solid #e0e4ee; padding: 12px; border-radius: 10px; font-size: 14px; background: white; color: #28334b; }
+.haven-editor-actions { display: flex; gap: 12px; }
+.haven-editor-actions .haven-button { flex: 1; }
+@media (max-width: 767px) { .haven-detail-editor { padding: 18px; } .haven-detail-editor select, .haven-detail-editor textarea { font-size: 16px; } }
+@media print { .haven-item-detail .haven-form-success { display: none !important; } }
+
+.haven-search-help { color: #929daf; font-size: 11px; line-height: 1.7; margin: -10px 0 18px; }

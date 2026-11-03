@@ -61,7 +61,7 @@ export const api = {
   },
 
   items: {
-    details: id => request(`/items/${id}/details`),
+    details: id => request(`/items/${encodeURIComponent(id)}/details`),
     quantity: (id, delta, roomId) => request(`/items/${id}/quantity`, { method: 'PATCH', body: { delta }, ...(roomId ? { headers: { 'X-Room-Id': roomId } } : {}) }),
     move: (id, placement) => request(`/items/${id}/order`, { method: 'PATCH', body: placement }),
     list: (params = {}) => {
@@ -69,7 +69,7 @@ export const api = {
       return request(`/items${qs ? '?' + qs : ''}`)
     },
     create: (data) => request('/items', { method: 'POST', body: data }),
-    update: (id, data) => request(`/items/${id}`, { method: 'PUT', body: data }),
+    update: (id, data, roomId) => request(`/items/${id}`, { method: 'PUT', body: data, ...(roomId ? { headers: { 'X-Room-Id': roomId } } : {}) }),
     delete: (id) => request(`/items/${id}`, { method: 'DELETE' }),
   },
 }

@@ -1,15 +1,17 @@
-import { useState, useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useState, useEffect, useMemo } from 'react'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import Modal from '../components/Modal'
 import ItemPhoto from '../components/ItemPhoto'
 import ItemCard from '../components/ItemCard'
+import { matchesItem, locationPaths } from '../../../shared/item-search.mjs'
 import { DndContext, MouseSensor, TouchSensor, KeyboardSensor, useSensor, useSensors, closestCenter } from '@dnd-kit/core'
 import { SortableContext, rectSortingStrategy, sortableKeyboardCoordinates, arrayMove } from '@dnd-kit/sortable'
 
 const INIT = { name: '', description: '', quantity: 1, unit: '个', location_id: '', category_id: '', notes: '', photo_data: null }
 
 export default function Items() {
+  const navigate = useNavigate()
   const [items, setItems] = useState([])
   const [categories, setCategories] = useState([])
   const [locations, setLocations] = useState([])
@@ -19,7 +21,6 @@ export default function Items() {
   const [filterLoc, setFilterLoc] = useState('')
   const [searchParams, setSearchParams] = useSearchParams()
   const [modal, setModal] = useState(() => searchParams.get('add') === '1')
-  const [editItem, setEditItem] = useState(null)
   const [form, setForm] = useState(INIT)
   const [saving, setSaving] = useState(false)
   const [photoBusy, setPhotoBusy] = useState(false)
@@ -40,15 +41,12 @@ export default function Items() {
 
   useEffect(() => {
     const editId = searchParams.get('edit')
-    if (loading || !editId) return
-    const item = items.find(row => String(row.id) === editId)
-    if (item) openEdit(item)
-    else setActionError('未找到可编辑的物品，请确认当前房间')
-  }, [loading, searchParams.get('edit')])
+    if (editId) navigate(`/items/${encodeURIComponent(editId)}`, { replace: true })
+  }, [searchParams.get('edit'), navigate])
 
+  const paths = useMemo(() => locationPaths(locations), [locations])
   const filtered = items.filter(item => {
-    if (search && !item.name.toLowerCase().includes(search.toLowerCase()) &&
-        !(item.description || '').toLowerCase().includes(search.toLowerCase())) return false
+    if (!matchesItem(item, search, paths.get(String(item.location_id)))) return false
     if (filterCat && String(item.category_id) !== filterCat) return false
     if (filterLoc && String(item.location_id) !== filterLoc) return false
     return true
@@ -68,24 +66,6 @@ export default function Items() {
     if (cardBusy) return
     setActionError('')
     setForm(INIT)
-    setEditItem(null)
-    setModal(true)
-  }
-
-  function openEdit(item) {
-    if (cardBusy) return
-    setActionError('')
-    setForm({
-      name: item.name,
-      description: item.description || '',
-      quantity: item.quantity,
-      unit: item.unit,
-      location_id: item.location_id ? String(item.location_id) : '',
-      category_id: item.category_id ? String(item.category_id) : '',
-      notes: item.notes || '',
-      photo_data: undefined,
-    })
-    setEditItem(item)
     setModal(true)
   }
 
@@ -105,13 +85,8 @@ export default function Items() {
         location_id: form.location_id ? parseInt(form.location_id) : null,
         category_id: form.category_id ? parseInt(form.category_id) : null,
       }
-      if (editItem) {
-        const updated = await api.items.update(editItem.id, data)
-        setItems(items.map(i => i.id === editItem.id ? updated : i))
-      } else {
-        const created = await api.items.create(data)
-        setItems([created, ...items])
-      }
+      const created = await api.items.create(data)
+      setItems([created, ...items])
       setModal(false)
       if (searchParams.has('add') || searchParams.has('edit')) { const next = new URLSearchParams(searchParams); next.delete('add'); next.delete('edit'); setSearchParams(next, { replace: true }) }
     } catch (err) {
@@ -208,7 +183,9 @@ export default function Items() {
       <div className="flex gap-3 mb-6 flex-wrap">
         <input
           type="text"
-          placeholder="🔍 搜索物品名称..."
+          placeholder="搜索名称、位置、分类、描述或备注…"
+          aria-label="智能模糊搜索物品"
+          maxLength={200}
           value={search}
           onChange={e => setSearch(e.target.value)}
           className="flex-1 min-w-48 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 bg-white"
@@ -239,6 +216,7 @@ export default function Items() {
         )}
       </div>
 
+      <p className="haven-search-help">可用空格组合关键词，例如“客厅 纸巾”；支持位置层级、不连续文字和少量英文拼写容错。</p>
       {filtered.length === 0 ? (
         <div className="text-center py-20 text-gray-400">
           <div className="text-6xl mb-4">📭</div>
@@ -260,7 +238,7 @@ export default function Items() {
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={dragEnd} accessibility={{ screenReaderInstructions: { draggable: '按空格开始排序，使用方向键移动，再按空格确认，按 Escape 取消。' } }}>
             <SortableContext items={filtered.map(item => item.id)} strategy={rectSortingStrategy}>
               <div className="haven-product-grid">
-                {filtered.map(item => <ItemCard key={item.id} item={item} location={locationPath(item)} busy={cardBusy} onEdit={openEdit} onDelete={handleDelete} onMove={moveItem} onQuantity={changeQuantity} />)}
+                {filtered.map(item => <ItemCard key={item.id} item={item} location={locationPath(item)} busy={cardBusy} onDelete={handleDelete} onMove={moveItem} onQuantity={changeQuantity} />)}
               </div>
             </SortableContext>
           </DndContext>
@@ -268,9 +246,9 @@ export default function Items() {
       )}
 
       {modal && (
-        <Modal title={editItem ? '编辑物品' : '添加物品'} onClose={closeModal}>
+        <Modal title="添加物品" onClose={closeModal}>
           <div className="space-y-4">
-            <ItemPhoto value={form.photo_data} existingUrl={editItem?.photo_url} onChange={value => setF('photo_data', value)} onBusy={setPhotoBusy} disabled={saving} />
+            <ItemPhoto value={form.photo_data} onChange={value => setF('photo_data', value)} onBusy={setPhotoBusy} disabled={saving} />
             {actionError && <p role="alert" className="text-sm text-red-600">{actionError}</p>}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">物品名称 <span className="text-red-400">*</span></label>

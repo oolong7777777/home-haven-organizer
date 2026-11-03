@@ -3,7 +3,7 @@ import { useSortable } from '@dnd-kit/sortable'
 import { Link } from 'react-router-dom'
 import { CSS } from '@dnd-kit/utilities'
 
-export default function ItemCard({ item, location, busy, onEdit, onDelete, onMove, onQuantity }) {
+export default function ItemCard({ item, location, busy, onDelete, onMove, onQuantity }) {
   const [menu, setMenu] = useState(false)
   const menuRef = useRef(null)
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id, disabled: busy })
@@ -23,8 +23,7 @@ export default function ItemCard({ item, location, busy, onEdit, onDelete, onMov
       <div ref={menuRef} className="haven-product-tools">
         <button type="button" className="haven-product-menu-toggle" aria-label={`「${item.name}」更多操作`} aria-expanded={menu} disabled={busy} onClick={() => setMenu(!menu)}>⋮</button>
         {menu && <div className="haven-product-menu" aria-label="物品操作">
-          <Link to={`/items/${item.id}`} onClick={() => setMenu(false)}>查看详情 / 二维码</Link>
-          <button type="button" onClick={() => action(() => onEdit(item))}>编辑物品</button>
+          <Link to={`/items/${item.id}`} onClick={() => setMenu(false)}>编辑物品 / 二维码</Link>
           <button type="button" onClick={() => action(() => onMove(item, { edge: 'first' }))}>移到最前</button>
           <button type="button" onClick={() => action(() => onMove(item, { edge: 'last' }))}>移到最后</button>
           <button type="button" className="haven-danger-text" onClick={() => action(() => onDelete(item))}>删除物品</button>

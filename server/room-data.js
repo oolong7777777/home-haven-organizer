@@ -1,3 +1,4 @@
+const { matchesItem, locationPaths } = require('../shared/item-search.mjs');
 const { randomUUID } = require('node:crypto');
 const { problem } = require('./accounts');
 function createRoomData(db) {
@@ -68,8 +69,11 @@ function createRoomData(db) {
   async function items(home, filters = {}) {
     const conditions = ['i.household_id = ?']; const args = [home];
     for (const key of ['category_id', 'location_id']) if (filters[key]) { conditions.push(`i.${key} = ?`); args.push(filters[key]); }
-    if (filters.q) { conditions.push('(i.name LIKE ? OR i.description LIKE ? OR i.notes LIKE ?)'); args.push(...Array(3).fill(`%${String(filters.q).slice(0, 200)}%`)); }
-    return db.prepare(itemJoin + ' WHERE ' + conditions.join(' AND ') + (filters.sort === 'recent' ? ' ORDER BY i.created_at DESC, i.id DESC' : ' ORDER BY COALESCE(i.sort_order, -i.id), i.id DESC')).all(...args);
+
+    const rows = await db.prepare(itemJoin + ' WHERE ' + conditions.join(' AND ') + (filters.sort === 'recent' ? ' ORDER BY i.created_at DESC, i.id DESC' : ' ORDER BY COALESCE(i.sort_order, -i.id), i.id DESC')).all(...args);
+    if (!filters.q) return rows;
+    const paths = locationPaths(await locations(home));
+    return rows.filter(item => matchesItem(item, filters.q, paths.get(String(item.location_id))));
   }
   async function changeQuantity(home, id, delta) {
     if (delta !== 1 && delta !== -1) throw problem(400, '数量调整必须为加一或减一');
@@ -116,7 +120,8 @@ function createRoomData(db) {
     if (!room) throw problem(404, '物品不存在或你无权访问所属房间');
     const item = await db.prepare(itemJoin + ' WHERE i.id = ? AND i.household_id = ?').get(id, room.id);
     const locations = await db.prepare('SELECT id, name, parent_id FROM locations WHERE household_id = ?').all(room.id);
-    return { item, room, locations };
+    const categories = await db.prepare('SELECT id, name, color, icon FROM categories WHERE household_id = ? ORDER BY name').all(room.id);
+    return { item, room, locations, categories };
   }
   async function photo(userId, id) {
     const row = await db.prepare('SELECT i.photo_data FROM items i JOIN memberships m ON m.household_id = i.household_id WHERE i.id = ? AND m.user_id = ? AND i.photo_data IS NOT NULL').get(id, userId);

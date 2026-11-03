@@ -65,3 +65,14 @@ test('cloud transactions guard later steps and roll back SQL errors', async () =
   assert.deepEqual(sqlite.prepare('SELECT id FROM sample').all().map(row => row.id), ['one']);
   sqlite.close();
 });
+
+
+test('smart search covers all fields, ancestor locations and cross-field keywords', async () => {
+  const { matchesItem, locationPaths } = require('../shared/item-search.mjs');
+  const item = { name: 'Apple 充电器', category_name: '电子设备', description: '白色 USB 电源', notes: '旅行备用' };
+  const paths = locationPaths([{ id: 1, name: '主卧室' }, { id: 2, name: '衣柜', parent_id: 1 }, { id: 3, name: '第一层', parent_id: 2 }]);
+  const location = paths.get('3');
+  for (const query of ['充电器', '主卧', '第一层', '电子', '白色', '旅行', '主卧 旅行', '主卧，旅行', 'ＡＰＰＬＥ', 'aple', '卧柜', '主卧 电子 备用', '   ']) assert.equal(matchesItem(item, query, location), true, query);
+  for (const query of ['厨房', '主卧 抽纸', 'grape', '旅行 食品']) assert.equal(matchesItem(item, query, location), false, query);
+  assert.doesNotThrow(() => locationPaths([{ id: 1, name: '循环位置', parent_id: 1 }]));
+});

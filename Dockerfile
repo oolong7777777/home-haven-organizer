@@ -3,6 +3,7 @@ WORKDIR /app/client
 COPY client/package*.json ./
 RUN npm ci
 COPY client/ ./
+COPY shared/ /app/shared/
 RUN npm run build
 
 FROM node:24-bookworm-slim
@@ -11,6 +12,7 @@ WORKDIR /app
 COPY server/package*.json ./server/
 RUN npm ci --prefix server --omit=dev && mkdir -p /data && chown node:node /data
 COPY server/ ./server/
+COPY shared/ ./shared/
 COPY --from=frontend /app/client/dist ./client/dist
 USER node
 EXPOSE 3001

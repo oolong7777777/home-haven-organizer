@@ -34,6 +34,10 @@ test('accounts and many-to-many rooms enforce sharing, isolation and session lif
   const detail = await request(`/items/${item.data.id}/details`, { cookie: alice.cookie, room: a });
   assert.equal(detail.status, 200); assert.equal(detail.data.item.id, item.data.id); assert.equal(detail.data.room.id, a);
   assert.equal(detail.data.item.photo_data, undefined); assert.equal(detail.data.locations[0].id, loc.data.id);
+  assert.ok(detail.data.categories.some(category => category.id === aCat));
+  const searchByLocation = await request('/items?q=' + encodeURIComponent('书柜'), { cookie: alice.cookie, room: a });
+  assert.equal(searchByLocation.data[0].id, item.data.id);
+  assert.equal((await request('/items?q=' + encodeURIComponent('书柜'), { cookie: bob.cookie, room: b })).data.length, 0);
   const photoData = 'data:image/jpeg;base64,' + Buffer.from([255, 216, 255, 217]).toString('base64');
   const photographed = await request('/items/' + item.data.id, { method: 'PUT', cookie: alice.cookie, room: a, body: { name: '共享书籍', quantity: 0, photo_data: photoData } });
   assert.equal(photographed.status, 200); assert.ok(photographed.data.photo_url); assert.equal(photographed.data.photo_data, undefined);
