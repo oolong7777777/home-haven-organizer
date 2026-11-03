@@ -1,7 +1,7 @@
 async function request(path, options = {}) {
-  const { body, ...rest } = options
+  const { body, headers, ...rest } = options
   const res = await fetch(`/api${path}`, {
-    headers: { 'Content-Type': 'application/json', ...(sessionStorage.getItem('haven_room') ? { 'X-Room-Id': sessionStorage.getItem('haven_room') } : {}) },
+    headers: { 'Content-Type': 'application/json', ...(sessionStorage.getItem('haven_room') ? { 'X-Room-Id': sessionStorage.getItem('haven_room') } : {}), ...headers },
     credentials: 'same-origin',
     body: body !== undefined ? JSON.stringify(body) : undefined,
     ...rest,
@@ -61,7 +61,8 @@ export const api = {
   },
 
   items: {
-    quantity: (id, delta) => request(`/items/${id}/quantity`, { method: 'PATCH', body: { delta } }),
+    details: id => request(`/items/${id}/details`),
+    quantity: (id, delta, roomId) => request(`/items/${id}/quantity`, { method: 'PATCH', body: { delta }, ...(roomId ? { headers: { 'X-Room-Id': roomId } } : {}) }),
     move: (id, placement) => request(`/items/${id}/order`, { method: 'PATCH', body: placement }),
     list: (params = {}) => {
       const qs = new URLSearchParams(params).toString()

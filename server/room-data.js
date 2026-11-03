@@ -111,11 +111,18 @@ function createRoomData(db) {
     for (const table of ['categories', 'locations', 'items']) result[table] = await db.prepare(`SELECT * FROM ${table} WHERE household_id = ?`).all(home);
     return result;
   }
+  async function itemDetails(userId, id) {
+    const room = await db.prepare('SELECT h.id, h.name, m.role FROM items i JOIN households h ON h.id = i.household_id JOIN memberships m ON m.household_id = h.id WHERE i.id = ? AND m.user_id = ?').get(id, userId);
+    if (!room) throw problem(404, '物品不存在或你无权访问所属房间');
+    const item = await db.prepare(itemJoin + ' WHERE i.id = ? AND i.household_id = ?').get(id, room.id);
+    const locations = await db.prepare('SELECT id, name, parent_id FROM locations WHERE household_id = ?').all(room.id);
+    return { item, room, locations };
+  }
   async function photo(userId, id) {
     const row = await db.prepare('SELECT i.photo_data FROM items i JOIN memberships m ON m.household_id = i.household_id WHERE i.id = ? AND m.user_id = ? AND i.photo_data IS NOT NULL').get(id, userId);
     if (!row) throw problem(404, '照片不存在或无权访问');
     return Buffer.from(row.photo_data.split(',')[1], 'base64');
   }
-  return { changeQuantity, moveItem, photo, categories, locations, items, categorySave, itemSave, locationSave, remove, stats, backup };
+  return { itemDetails, changeQuantity, moveItem, photo, categories, locations, items, categorySave, itemSave, locationSave, remove, stats, backup };
 }
 module.exports = { createRoomData };

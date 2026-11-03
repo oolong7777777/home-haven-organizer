@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
+import { Link } from 'react-router-dom'
 import { CSS } from '@dnd-kit/utilities'
 
 export default function ItemCard({ item, location, busy, onEdit, onDelete, onMove, onQuantity }) {
@@ -22,6 +23,7 @@ export default function ItemCard({ item, location, busy, onEdit, onDelete, onMov
       <div ref={menuRef} className="haven-product-tools">
         <button type="button" className="haven-product-menu-toggle" aria-label={`「${item.name}」更多操作`} aria-expanded={menu} disabled={busy} onClick={() => setMenu(!menu)}>⋮</button>
         {menu && <div className="haven-product-menu" aria-label="物品操作">
+          <Link to={`/items/${item.id}`} onClick={() => setMenu(false)}>查看详情 / 二维码</Link>
           <button type="button" onClick={() => action(() => onEdit(item))}>编辑物品</button>
           <button type="button" onClick={() => action(() => onMove(item, { edge: 'first' }))}>移到最前</button>
           <button type="button" onClick={() => action(() => onMove(item, { edge: 'last' }))}>移到最后</button>
@@ -30,7 +32,7 @@ export default function ItemCard({ item, location, busy, onEdit, onDelete, onMov
       </div>
     </div>
     <div className="haven-product-content">
-      <h3 title={item.name}>{item.name}</h3>
+      <h3 title={item.name}><Link to={`/items/${item.id}`}>{item.name}</Link></h3>
       <p className="haven-product-location" title={location}>📍 {location || '未指定位置'}</p>
       {item.description && <p className="haven-product-description">{item.description}</p>}
       <div className="haven-product-tags"><span style={{ color: item.category_color || '#64748b', backgroundColor: (item.category_color || '#64748b') + '12' }}>{item.category_icon || '🏷️'} {item.category_name || '未分类'}</span></div>

@@ -38,6 +38,14 @@ export default function Items() {
       .catch(err => { console.error('加载失败:', err); setError(err.message); setLoading(false) })
   }, [])
 
+  useEffect(() => {
+    const editId = searchParams.get('edit')
+    if (loading || !editId) return
+    const item = items.find(row => String(row.id) === editId)
+    if (item) openEdit(item)
+    else setActionError('未找到可编辑的物品，请确认当前房间')
+  }, [loading, searchParams.get('edit')])
+
   const filtered = items.filter(item => {
     if (search && !item.name.toLowerCase().includes(search.toLowerCase()) &&
         !(item.description || '').toLowerCase().includes(search.toLowerCase())) return false
@@ -49,9 +57,9 @@ export default function Items() {
   function closeModal() {
     if (saving || photoBusy) return
     setModal(false)
-    if (searchParams.has('add')) {
+    if (searchParams.has('add') || searchParams.has('edit')) {
       const next = new URLSearchParams(searchParams)
-      next.delete('add')
+      next.delete('add'); next.delete('edit')
       setSearchParams(next, { replace: true })
     }
   }
@@ -105,7 +113,7 @@ export default function Items() {
         setItems([created, ...items])
       }
       setModal(false)
-      if (searchParams.has('add')) { const next = new URLSearchParams(searchParams); next.delete('add'); setSearchParams(next, { replace: true }) }
+      if (searchParams.has('add') || searchParams.has('edit')) { const next = new URLSearchParams(searchParams); next.delete('add'); next.delete('edit'); setSearchParams(next, { replace: true }) }
     } catch (err) {
       setActionError(err.message || '保存失败，请重试')
     } finally {

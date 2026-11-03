@@ -1,9 +1,12 @@
 import { useState } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { api } from '../api'
 import { useAuth } from '../AuthContext'
 export default function Login() {
   const { account, loading, error: startupError, accept, refresh } = useAuth()
+  const [params] = useSearchParams()
+  const target = params.get('next') || '/dashboard'
+  const destination = /^\/(?!\/)/.test(target) && !target.includes('\\') && !target.startsWith('/login') ? target : '/dashboard'
   const [mode, setMode] = useState('login')
   const [form, setForm] = useState({ username: '', password: '', display_name: '', invite_code: '', room_name: '' })
   const [join, setJoin] = useState(false)
@@ -17,7 +20,7 @@ export default function Login() {
     finally { setBusy(false) }
   }
   if (loading) return <div className="haven-auth-loading" role="status">正在检查登录状态…</div>
-  if (account) return <Navigate to="/dashboard" replace />
+  if (account) return <Navigate to={destination} replace />
   return (
     <main className="haven-login-page">
       <div className="haven-login-story"><Link to="/login" className="haven-login-brand">🏠 家物管家</Link><h1>每个房间，<br />都有一起打理的人。</h1><p>记录物品，安排位置。与家人共享同一个房间，也保留自己的收纳空间。</p><div className="haven-login-features"><span>📦 物品有记录</span><span>📍 收纳有位置</span><span>👥 房间可共享</span></div></div>

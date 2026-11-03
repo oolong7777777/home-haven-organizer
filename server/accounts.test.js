@@ -29,6 +29,11 @@ test('accounts and many-to-many rooms enforce sharing, isolation and session lif
   assert.equal((await request('/categories', { cookie: alice.cookie, room: a })).data.length, 6);
   const loc = await request('/locations', { method: 'POST', cookie: alice.cookie, room: a, body: { name: '书柜' } }); assert.equal(loc.status, 201);
   const item = await request('/items', { method: 'POST', cookie: alice.cookie, room: a, body: { name: '共享书籍', quantity: 0, category_id: aCat, location_id: loc.data.id } }); assert.equal(item.status, 201); assert.equal(item.data.quantity, 0);
+  assert.equal((await request(`/items/${item.data.id}/details`)).status, 401);
+  assert.equal((await request(`/items/${item.data.id}/details`, { cookie: bob.cookie, room: b })).status, 404);
+  const detail = await request(`/items/${item.data.id}/details`, { cookie: alice.cookie, room: a });
+  assert.equal(detail.status, 200); assert.equal(detail.data.item.id, item.data.id); assert.equal(detail.data.room.id, a);
+  assert.equal(detail.data.item.photo_data, undefined); assert.equal(detail.data.locations[0].id, loc.data.id);
   const photoData = 'data:image/jpeg;base64,' + Buffer.from([255, 216, 255, 217]).toString('base64');
   const photographed = await request('/items/' + item.data.id, { method: 'PUT', cookie: alice.cookie, room: a, body: { name: '共享书籍', quantity: 0, photo_data: photoData } });
   assert.equal(photographed.status, 200); assert.ok(photographed.data.photo_url); assert.equal(photographed.data.photo_data, undefined);
@@ -58,6 +63,8 @@ test('accounts and many-to-many rooms enforce sharing, isolation and session lif
   assert.equal((await request(`/rooms/${a}/invites`, { method: 'POST', cookie: bob.cookie, body: {} })).status, 403);
   const third = await request('/rooms', { method: 'POST', cookie: bob.cookie, body: { name: '第三个房间' } }); assert.equal(third.status, 201); assert.equal(third.data.rooms.length, 3);
   const next = await request('/rooms/switch', { method: 'POST', cookie: bob.cookie, body: { room_id: b } }); assert.equal(next.status, 200); assert.equal(next.data.activeRoom.id, b);
+  const scannedFromOtherRoom = await request(`/items/${item.data.id}/details`, { cookie: bob.cookie, room: b });
+  assert.equal(scannedFromOtherRoom.status, 200); assert.equal(scannedFromOtherRoom.data.room.id, a);
   const backup = await request('/backup', { cookie: bob.cookie, room: b }); assert.equal(backup.data.items.length, 0); assert.equal(backup.data.room.id, b); assert.equal(backup.data.users, undefined);
   assert.equal((await signup('carol', invitation.data.code)).status, 400);
   assert.equal(db.prepare('SELECT id FROM users WHERE username = ?').get('carol'), undefined);

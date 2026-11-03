@@ -39,6 +39,10 @@ function createApp(db, env = process.env) {
   app.delete('/api/rooms/:id', wrap(accounts.deleteRoom));
   app.delete('/api/rooms/:id/members/:userId', wrap(accounts.removeMember));
   app.get('/api/storage', wrap(async (req, res) => { await accounts.session(req); res.json({ cloud: !!env.TURSO_DATABASE_URL, temporary: env.RENDER === 'true' && !env.TURSO_DATABASE_URL }); }));
+  app.get('/api/items/:id/details', wrap(async (req, res) => {
+    const user = await accounts.session(req);
+    res.json(await data.itemDetails(user.id, req.params.id));
+  }));
   app.get('/api/items/:id/photo', wrap(async (req, res) => {
     const user = await accounts.session(req);
     res.type('image/jpeg').send(await data.photo(user.id, req.params.id));
