@@ -90,7 +90,7 @@ export default function Categories() {
   )
 
   return (
-    <div className="p-8">
+    <div className="haven-page">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">分类管理</h1>
@@ -116,14 +116,14 @@ export default function Categories() {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        <div className="haven-category-grid">
           {categories.map(cat => (
             <div
               key={cat.id}
               className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-shadow group relative"
             >
               <div
-                className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute top-3 right-3 flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 focus-within:opacity-100 transition-opacity"
               >
                 <button
                   onClick={() => openEdit(cat)}
@@ -173,7 +173,7 @@ export default function Categories() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">选择图标</label>
-              <div className="grid grid-cols-9 gap-1.5 max-h-36 overflow-y-auto">
+              <div className="grid grid-cols-6 sm:grid-cols-9 gap-1.5 max-h-36 overflow-y-auto">
                 {PRESET_ICONS.map(ico => (
                   <button
                     key={ico}

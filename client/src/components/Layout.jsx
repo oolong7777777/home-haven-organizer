@@ -1,54 +1,64 @@
+import { useEffect, useState } from 'react'
 import { Outlet, NavLink } from 'react-router-dom'
+import { useAuth } from '../AuthContext'
+import { api } from '../api'
 
 const navItems = [
   { to: '/dashboard', emoji: '📊', label: '概览' },
   { to: '/items', emoji: '📦', label: '物品' },
   { to: '/locations', emoji: '📍', label: '位置' },
   { to: '/categories', emoji: '🏷️', label: '分类' },
+  { to: '/account', emoji: '👤', label: '我的' },
 ]
 
 export default function Layout() {
-  return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
-      <aside className="w-60 bg-white border-r border-gray-100 flex flex-col flex-shrink-0">
-        <div className="px-6 py-5 border-b border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center text-white text-lg leading-none">
-              🏠
-            </div>
-            <div>
-              <div className="font-bold text-gray-900 text-sm leading-tight">家物管家</div>
-              <div className="text-xs text-gray-400">Home Haven</div>
-            </div>
-          </div>
-        </div>
+  const { account, accept } = useAuth()
+  const [actionError, setActionError] = useState('')
+  const [switching, setSwitching] = useState(false)
+  async function switchRoom(id) {
+    setSwitching(true); setActionError('')
+    try { accept(await api.rooms.switch(id)) } catch (err) { setActionError(err.message) } finally { setSwitching(false) }
+  }
+  async function exportData() {
+    if (!account.activeRoom) return
+    try { await api.downloadBackup() } catch (err) { setActionError(err.message) }
+  }
+  const [storage, setStorage] = useState(null)
+  useEffect(() => {
+    fetch('/api/storage').then(response => {
+      if (!response.ok) throw new Error('storage status unavailable')
+      return response.json()
+    }).then(setStorage).catch(() => setStorage({ unknown: true }))
+  }, [])
+  const warning = storage?.temporary || storage?.unknown
 
-        <nav className="flex-1 p-3 space-y-0.5">
+  return (
+    <div className="haven-shell">
+      <aside className="haven-sidebar">
+        <NavLink to="/dashboard" className="haven-brand" aria-label="家物管家首页">
+          <span className="haven-brand-icon" aria-hidden="true">🏠</span>
+          <span className="haven-brand-copy"><strong>家物管家</strong><small>Home Haven</small></span>
+        </NavLink>
+        <div className="haven-room-switch"><label htmlFor="active-room">当前房间</label><select id="active-room" disabled={switching || !account.rooms.length} value={account.activeRoom?.id || ''} onChange={e => switchRoom(e.target.value)}>{!account.rooms.length && <option value="">暂无房间</option>}{account.rooms.map(room => <option key={room.id} value={room.id}>{room.name}</option>)}</select><NavLink to="/account">新建 / 加入房间</NavLink></div>
+        <nav aria-label="主导航" className="haven-nav">
           {navItems.map(({ to, emoji, label }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                  isActive
-                    ? 'bg-indigo-50 text-indigo-700'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`
-              }
-            >
-              <span className="text-base leading-none">{emoji}</span>
-              {label}
+            <NavLink key={to} to={to} title={label} className={({ isActive }) => `haven-nav-link ${isActive ? 'is-active' : ''}`}>
+              <span aria-hidden="true">{emoji}</span><span>{label}</span>
             </NavLink>
           ))}
         </nav>
-
-        <div className="px-6 py-4 border-t border-gray-100">
-          <p className="text-xs text-gray-300 text-center">家物管家 v1.0</p>
-        </div>
+        <div className="haven-sidebar-note">{account.user.display_name}</div>
       </aside>
-
-      <main className="flex-1 overflow-auto">
-        <Outlet />
+      <main id="main-content" className="haven-main">
+        <div className={`haven-storage ${warning ? 'is-warning' : ''}`}>
+          <span className="haven-storage-dot" aria-hidden="true" />
+          <span className="haven-storage-message">
+            {!storage ? '正在检查存储状态…' : storage.unknown ? '暂时无法确认数据保存状态，请刷新后重试。' : storage.temporary ? '试用存储 · 重启可能清空记录，请及时导出。' : storage.cloud ? '云端存储已连接' : '数据保存在当前服务器'}
+          </span>
+          <button type="button" disabled={!account.activeRoom} onClick={exportData} className="haven-export">导出当前房间 ↗</button>
+        </div>
+        {actionError && <p role="alert" className="haven-form-error">{actionError}</p>}
+        <div key={account.activeRoom?.id}><Outlet /></div>
       </main>
     </div>
   )

@@ -25,7 +25,7 @@ function LocationNode({ node, allNodes, onEdit, onDelete, onSelect, selectedId, 
         className={`flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer group transition-colors ${
           isSelected ? 'bg-indigo-50' : 'hover:bg-gray-50'
         }`}
-        style={{ paddingLeft: `${12 + depth * 20}px` }}
+        style={{ paddingLeft: `${12 + Math.min(depth, 5) * 16}px` }}
         onClick={() => onSelect(node)}
       >
         {node.children.length > 0 ? (
@@ -46,7 +46,7 @@ function LocationNode({ node, allNodes, onEdit, onDelete, onSelect, selectedId, 
         {node.item_count > 0 && (
           <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">{node.item_count}</span>
         )}
-        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
           <button
             onClick={e => { e.stopPropagation(); onEdit(node) }}
             className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-indigo-500 text-xs"
@@ -168,9 +168,9 @@ export default function Locations() {
   )
 
   return (
-    <div className="flex h-full">
+    <div className="haven-page haven-locations">
       {/* Left: tree panel */}
-      <div className="w-72 flex-shrink-0 border-r border-gray-100 bg-white flex flex-col">
+      <div className="haven-location-tree">
         <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
           <h2 className="font-semibold text-gray-800 text-sm">位置层级</h2>
           <button
@@ -181,7 +181,7 @@ export default function Locations() {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-2">
+        <div className="haven-location-nodes p-2">
           {tree.length === 0 ? (
             <div className="text-center py-8 text-gray-400 text-sm">
               <div className="text-3xl mb-2">🏠</div>
@@ -207,7 +207,7 @@ export default function Locations() {
       </div>
 
       {/* Right: items in selected location */}
-      <div className="flex-1 p-8 overflow-auto">
+      <div className="haven-location-detail">
         {!selectedLoc ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-400">
             <div className="text-6xl mb-4">👈</div>
@@ -239,7 +239,7 @@ export default function Locations() {
             ) : (
               <div>
                 <p className="text-sm text-gray-400 mb-4">共 {locItems.length} 件物品</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="haven-card-grid">
                   {locItems.map(item => (
                     <div key={item.id} className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
                       <div className="flex items-center gap-3">
