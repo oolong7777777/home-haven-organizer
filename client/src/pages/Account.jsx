@@ -6,6 +6,8 @@ import Modal from '../components/Modal'
 export default function Account() {
   const { account, accept, logout } = useAuth()
   const [members, setMembers] = useState([])
+  const [nickname, setNickname] = useState(account.user.display_name)
+  useEffect(() => { setNickname(account.user.display_name) }, [account.user.display_name])
   const [roomName, setRoomName] = useState('')
   const [joinCode, setJoinCode] = useState('')
   const [invitation, setInvitation] = useState(null)
@@ -74,6 +76,22 @@ export default function Account() {
     {error && <p role="alert" className="haven-form-error">{error}</p>}
     {message && <p role="status" className="haven-form-success">{message}</p>}
     <div className="haven-account-grid">
+      <section className="haven-panel haven-account-section">
+        <h2>个人信息</h2><p>昵称用于房间成员列表和网站内的称呼，不影响登录用户名。</p>
+        <form className="haven-account-form" onSubmit={e => submit(e, async () => {
+          const result = await api.auth.profile(nickname.trim())
+          accept(result, true)
+          setNickname(result.user.display_name)
+          setMembers(current => current.map(member => member.id === result.user.id ? { ...member, display_name: result.user.display_name } : member))
+          setManagedMembers(current => current.map(member => member.id === result.user.id ? { ...member, display_name: result.user.display_name } : member))
+          setMessage('昵称已更新')
+        })}>
+          <label>登录用户名<input value={account.user.username} readOnly aria-readonly="true" /></label>
+          <label>昵称<input required maxLength={40} autoComplete="nickname" value={nickname} disabled={busy} onChange={e => setNickname(e.target.value)} placeholder="填写你的称呼" /></label>
+          <small>支持 1–40 个字符；登录用户名保持不变。</small>
+          <button className="haven-button haven-button-primary" disabled={busy || !nickname.trim() || nickname.trim() === account.user.display_name}>保存昵称</button>
+        </form>
+      </section>
       <section className="haven-panel haven-account-section">
         <h2>我的房间</h2><p>切换房间后，只展示该房间的物品、分类和位置。创建者可以编辑房间、管理成员或删除房间。</p>
         {!account.rooms.length && <div className="haven-no-rooms">还没有房间。新建一个，或使用邀请码加入家人的房间。</div>}

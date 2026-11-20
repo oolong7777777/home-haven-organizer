@@ -23,6 +23,18 @@ test('accounts and many-to-many rooms enforce sharing, isolation and session lif
   assert.equal((await signup('ALICE')).status, 409);
   const bob = await signup('bob'); assert.equal(bob.status, 201);
   const a = alice.data.activeRoom.id, b = bob.data.activeRoom.id;
+  assert.equal((await request('/auth/profile', { method: 'PATCH', body: { display_name: '未登录修改' } })).status, 401);
+  for (const value of ['', '   ', '超'.repeat(41), '名字\n换行', null]) {
+    assert.equal((await request('/auth/profile', { method: 'PATCH', cookie: alice.cookie, body: { display_name: value } })).status, 400);
+  }
+  const renamedProfile = await request('/auth/profile', { method: 'PATCH', cookie: alice.cookie, body: { display_name: '  新昵称  ', username: 'someone-else', user_id: bob.data.user.id } });
+  assert.equal(renamedProfile.status, 200);
+  assert.equal(renamedProfile.data.user.display_name, '新昵称'); assert.equal(renamedProfile.data.user.username, 'alice'); assert.equal(renamedProfile.data.user.id, alice.data.user.id);
+  assert.equal((await request('/auth/me', { cookie: alice.cookie })).data.user.display_name, '新昵称');
+  assert.equal((await request('/auth/me', { cookie: bob.cookie })).data.user.display_name, 'bob');
+  const profileMembers = await request('/rooms/' + a + '/members', { cookie: alice.cookie });
+  assert.equal(profileMembers.data.find(member => member.id === alice.data.user.id).display_name, '新昵称');
+
   const userHash = db.prepare('SELECT password_hash FROM users WHERE username = ?').get('alice').password_hash;
   assert.notEqual(userHash, password); assert.ok(await verifyPassword(password, userHash));
   const aCat = (await request('/categories', { cookie: alice.cookie, room: a })).data[0].id;

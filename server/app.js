@@ -28,6 +28,7 @@ function createApp(db, env = process.env) {
   app.post('/api/auth/login', wrap(accounts.login));
   app.post('/api/auth/logout', wrap(accounts.logout));
   app.get('/api/auth/me', wrap(async (req, res) => res.json(await accounts.info(await accounts.session(req)))));
+  app.patch('/api/auth/profile', wrap(accounts.updateProfile));
   app.post('/api/auth/password', wrap(accounts.changePassword));
   app.get('/api/rooms', wrap(async (req, res) => res.json(await accounts.listRooms((await accounts.session(req)).id))));
   app.post('/api/rooms', wrap(accounts.createRoom));

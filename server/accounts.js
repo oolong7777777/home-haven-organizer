@@ -100,6 +100,14 @@ function createAccounts(db, env = process.env) {
     setCookie(req, res, '', 0);
     res.json({ success: true });
   }
+  async function updateProfile(req, res) {
+    const user = await session(req);
+    const value = req.body.display_name;
+    if (typeof value !== 'string' || !value.trim() || value.trim().length > 40 || /[\u0000-\u001f\u007f]/u.test(value)) throw problem(400, '昵称需为 1–40 个字符，且不能包含换行或控制字符');
+    const display = value.trim();
+    await db.prepare('UPDATE users SET display_name = ? WHERE id = ?').run(display, user.id);
+    res.json(await info({ ...user, display_name: display }));
+  }
   async function changePassword(req, res) {
     const current = await session(req);
     await limit(`password:${current.id}`, 10);
@@ -208,6 +216,6 @@ function createAccounts(db, env = process.env) {
     try { req.room = await room(req.account.id, requested || req.account.active_household_id); }
     catch (err) { err.code = 'ROOM_UNAVAILABLE'; throw err; }
   }
-  return { session, info, room, listRooms, register, login, logout, changePassword, createRoom, switchRoom, joinRoom, invite, members, editRoom, removeMember, deleteRoom, authorize };
+  return { session, info, room, listRooms, register, login, logout, updateProfile, changePassword, createRoom, switchRoom, joinRoom, invite, members, editRoom, removeMember, deleteRoom, authorize };
 }
 module.exports = { createAccounts, problem };

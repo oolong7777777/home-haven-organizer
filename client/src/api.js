@@ -20,6 +20,7 @@ async function request(path, options = {}) {
 export const api = {
   auth: {
     me: () => request('/auth/me'),
+    profile: display_name => request('/auth/profile', { method: 'PATCH', body: { display_name } }),
     login: data => request('/auth/login', { method: 'POST', body: data }),
     register: data => request('/auth/register', { method: 'POST', body: data }),
     logout: () => request('/auth/logout', { method: 'POST', body: {} }),
