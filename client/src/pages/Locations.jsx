@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { api } from '../api'
+import { Link, useSearchParams } from 'react-router-dom'
 import Modal from '../components/Modal'
 
 const TYPE_META = {
@@ -75,6 +76,7 @@ function LocationNode({ node, allNodes, onEdit, onDelete, onSelect, selectedId, 
 }
 
 export default function Locations() {
+  const [params, setParams] = useSearchParams()
   const [tree, setTree] = useState([])
   const [flatList, setFlatList] = useState([])
   const [selectedLoc, setSelectedLoc] = useState(null)
@@ -95,6 +97,10 @@ export default function Locations() {
       const [treeData, flat] = await Promise.all([api.locations.tree(), api.locations.list()])
       setTree(treeData)
       setFlatList(flat)
+      const requested = params.get('location')
+      const node = flat.find(row => String(row.id) === requested)
+      if (node) await selectLocation(node)
+      else if (requested) { setSelectedLoc(null); setLocItems([]) }
     } catch (err) {
       console.error('加载失败:', err)
       setError(err.message)
@@ -104,11 +110,17 @@ export default function Locations() {
   }
 
   async function selectLocation(node) {
+    setParams({ location: String(node.id) }, { replace: true })
     setSelectedLoc(node)
     setLoadingItems(true)
-    const items = await api.items.list({ location_id: node.id })
-    setLocItems(items)
-    setLoadingItems(false)
+    try {
+      const items = await api.items.list({ location_id: node.id })
+      setLocItems(items)
+    } catch (err) {
+      setError(err.message || '读取位置物品失败')
+    } finally {
+      setLoadingItems(false)
+    }
   }
 
   function openAdd() {
@@ -241,7 +253,7 @@ export default function Locations() {
                 <p className="text-sm text-gray-400 mb-4">共 {locItems.length} 件物品</p>
                 <div className="haven-card-grid">
                   {locItems.map(item => (
-                    <div key={item.id} className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+                    <Link key={item.id} to={`/items/${item.id}?from=locations&location=${selectedLoc.id}`} aria-label={`查看或编辑「${item.name}」`} className="block bg-white rounded-xl p-4 border border-gray-100 shadow-sm hover:border-indigo-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-300 transition-all">
                       <div className="flex items-center gap-3">
                         <div
                           className="w-9 h-9 rounded-lg flex items-center justify-center text-base flex-shrink-0"
@@ -254,7 +266,7 @@ export default function Locations() {
                           <div className="text-xs text-gray-400 mt-0.5">{item.quantity} {item.unit}</div>
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               </div>

@@ -1,14 +1,18 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import QRCode from 'qrcode'
 import { api } from '../api'
 import ItemPhoto from '../components/ItemPhoto'
 import ItemExpiry from '../components/ItemExpiry'
+import ItemRelationField from '../components/ItemRelationField'
 import { validExpiry } from '../../../shared/item-expiry.mjs'
-import { locationPaths } from '../../../shared/item-search.mjs'
 
 export default function ItemDetail() {
   const { id } = useParams()
+  const [params] = useSearchParams()
+  const fromLocation = params.get('from') === 'locations' && /^[1-9]\d*$/.test(params.get('location') || '')
+  const backTo = fromLocation ? '/locations?location=' + params.get('location') : '/items'
+  const backLabel = fromLocation ? '返回存放位置' : '返回物品列表'
   const [record, setRecord] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -16,6 +20,9 @@ export default function ItemDetail() {
   const [qrError, setQrError] = useState('')
   const [busy, setBusy] = useState(false)
   const [photoBusy, setPhotoBusy] = useState(false)
+  const [categoryEditing, setCategoryEditing] = useState(false)
+  const [locationEditing, setLocationEditing] = useState(false)
+  const relationBusy = categoryEditing || locationEditing
   const [form, setForm] = useState(null)
   const [dirty, setDirty] = useState(false)
   const [message, setMessage] = useState('')
@@ -36,7 +43,7 @@ export default function ItemDetail() {
   }, [record?.item.id, link])
   async function save(e) {
     e.preventDefault()
-    if (busy || photoBusy) return
+    if (busy || photoBusy || relationBusy) return
     const quantity = Number(form.quantity)
     if (!Number.isSafeInteger(quantity) || quantity < 0) { setError('数量必须是非负整数'); return }
     if (!validExpiry(form.expires_on)) { setError('请选择有效的到期日期'); return }
@@ -67,11 +74,10 @@ export default function ItemDetail() {
     } catch (err) { setError(err.message || '下载失败，请重试') } finally { setBusy(false) }
   }
   if (loading) return <div className="haven-page haven-state" role="status">正在读取物品…</div>
-  if (!record) return <div className="haven-page haven-state"><p role="alert">{error || '物品不存在或你无权查看'}</p><p className="haven-small-note">请确认登录了正确账号，并已加入物品所属房间。物品删除后，原二维码将失效。</p><Link to="/account" className="haven-button">管理我的房间</Link><Link to="/items" className="haven-text-link">返回物品列表</Link></div>
+  if (!record) return <div className="haven-page haven-state"><p role="alert">{error || '物品不存在或你无权查看'}</p><p className="haven-small-note">请确认登录了正确账号，并已加入物品所属房间。物品删除后，原二维码将失效。</p><Link to="/account" className="haven-button">管理我的房间</Link><Link to={backTo} className="haven-text-link">{backLabel}</Link></div>
   const { item, room, locations, categories = [] } = record
-  const paths = locationPaths(locations)
   return <div className="haven-page haven-item-detail">
-    <header className="haven-page-heading haven-detail-header"><div><p className="haven-eyebrow">{room.name} · 物品 #{item.id}</p><h1>{item.name}</h1><p className="haven-subtitle">直接编辑物品信息，二维码始终对应同一件物品。</p></div><Link to="/items" className="haven-button" onClick={e => { if ((dirty && !window.confirm('有尚未保存的修改，确认返回？')) || busy || photoBusy) e.preventDefault() }}>返回物品列表</Link></header>
+    <header className="haven-page-heading haven-detail-header"><div><p className="haven-eyebrow">{room.name} · 物品 #{item.id}</p><h1>{item.name}</h1><p className="haven-subtitle">直接编辑物品信息，二维码始终对应同一件物品。</p></div><Link to={backTo} className="haven-button" onClick={e => { if ((dirty && !window.confirm('有尚未保存的修改，确认返回？')) || busy || photoBusy || relationBusy) e.preventDefault() }}>{backLabel}</Link></header>
     {error && <p className="haven-form-error" role="alert">{error}</p>}
     {message && <p role="status" className="haven-form-success">{message}</p>}
     <div className="haven-detail-grid">
@@ -82,17 +88,17 @@ export default function ItemDetail() {
           <label>物品名称<input required maxLength={120} value={form.name} disabled={busy} onChange={e => setField('name', e.target.value)} /></label>
           <div className="haven-editor-row"><label>数量<input type="number" min="0" step="1" max={Number.MAX_SAFE_INTEGER} required value={form.quantity} disabled={busy} onChange={e => setField('quantity', e.target.value)} /></label><label>单位<input maxLength={20} value={form.unit} disabled={busy} onChange={e => setField('unit', e.target.value)} /></label></div>
           <ItemExpiry value={form.expires_on} onChange={value => setField('expires_on', value)} disabled={busy} />
-          <label>存放位置<select value={form.location_id} disabled={busy} onChange={e => setField('location_id', e.target.value)}><option value="">未指定位置</option>{locations.map(location => <option key={location.id} value={String(location.id)}>{paths.get(String(location.id))}</option>)}</select></label>
-          <label>分类<select value={form.category_id} disabled={busy} onChange={e => setField('category_id', e.target.value)}><option value="">未分类</option>{categories.map(category => <option key={category.id} value={String(category.id)}>{category.icon} {category.name}</option>)}</select></label>
+          <ItemRelationField kind="locations" value={form.location_id} rows={locations} roomId={room.id} onChange={value => setField('location_id', value)} onSaved={saved => setRecord(current => ({ ...current, locations: [...current.locations.filter(row => row.id !== saved.id), saved].sort((a, b) => a.name.localeCompare(b.name, 'zh-CN')) }))} onEditing={setLocationEditing} disabled={busy || photoBusy} />
+          <ItemRelationField kind="categories" value={form.category_id} rows={categories} roomId={room.id} onChange={value => setField('category_id', value)} onSaved={saved => setRecord(current => ({ ...current, categories: [...current.categories.filter(row => row.id !== saved.id), saved].sort((a, b) => a.name.localeCompare(b.name, 'zh-CN')) }))} onEditing={setCategoryEditing} disabled={busy || photoBusy} />
           <label>描述<textarea rows={3} maxLength={5000} value={form.description} disabled={busy} onChange={e => setField('description', e.target.value)} /></label>
           <label>备注<textarea rows={3} maxLength={5000} value={form.notes} disabled={busy} onChange={e => setField('notes', e.target.value)} /></label>
-          <div className="haven-editor-actions"><button type="button" className="haven-button" disabled={!dirty || busy || photoBusy} onClick={reset}>撤销修改</button><button className="haven-button haven-button-primary" disabled={!dirty || !form.name.trim() || busy || photoBusy}>{busy ? '保存中…' : '保存修改'}</button></div>
+          <div className="haven-editor-actions"><button type="button" className="haven-button" disabled={!dirty || busy || photoBusy || relationBusy} onClick={reset}>撤销修改</button><button className="haven-button haven-button-primary" disabled={!dirty || !form.name.trim() || busy || photoBusy || relationBusy}>{busy ? '保存中…' : '保存修改'}</button></div>
         </form>
       </section>
       <aside className="haven-panel haven-qr-panel">
         <div className="haven-qr-heading"><h2>物品二维码标签</h2><p>可使用普通纸打印，裁剪后粘贴。</p></div>
         <div className="haven-qr-label">{qr ? <img src={qr} alt={`物品 ${item.name} 的二维码`} /> : <p role="status">{qrError || '正在生成二维码…'}</p>}<strong>{item.name}</strong></div>
-        <div className="haven-qr-actions"><button className="haven-button haven-button-primary" disabled={!qr || busy || photoBusy || dirty} onClick={() => window.print()}>打印标签</button><button className="haven-button" disabled={!qr || busy || photoBusy || dirty} onClick={download}>下载标签 PNG</button><button className="haven-button" onClick={async () => { try { await navigator.clipboard.writeText(link) } catch { setError('复制失败，请复制下方物品链接') } }}>复制物品链接</button></div>
+        <div className="haven-qr-actions"><button className="haven-button haven-button-primary" disabled={!qr || busy || photoBusy || relationBusy || dirty} onClick={() => window.print()}>打印标签</button><button className="haven-button" disabled={!qr || busy || photoBusy || relationBusy || dirty} onClick={download}>下载标签 PNG</button><button className="haven-button" onClick={async () => { try { await navigator.clipboard.writeText(link) } catch { setError('复制失败，请复制下方物品链接') } }}>复制物品链接</button></div>
         {dirty && <p className="haven-qr-note">修改后请先保存，再打印或下载最新名称的标签。</p>}
         <p className="haven-qr-note">手机使用系统相机或扫码工具识别后，在浏览器打开链接。未登录会先进入登录页；二维码不会绕过房间权限。</p><input className="haven-qr-link" aria-label="物品链接" readOnly value={link} onFocus={e => e.target.select()} />
       </aside>

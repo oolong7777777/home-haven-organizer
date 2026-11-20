@@ -47,16 +47,16 @@ export const api = {
 
   categories: {
     list: () => request('/categories'),
-    create: (data) => request('/categories', { method: 'POST', body: data }),
-    update: (id, data) => request(`/categories/${id}`, { method: 'PUT', body: data }),
+    create: (data, roomId) => request('/categories', { method: 'POST', body: data, ...(roomId ? { headers: { 'X-Room-Id': roomId } } : {}) }),
+    update: (id, data, roomId) => request(`/categories/${id}`, { method: 'PUT', body: data, ...(roomId ? { headers: { 'X-Room-Id': roomId } } : {}) }),
     delete: (id) => request(`/categories/${id}`, { method: 'DELETE' }),
   },
 
   locations: {
     list: () => request('/locations'),
     tree: () => request('/locations/tree'),
-    create: (data) => request('/locations', { method: 'POST', body: data }),
-    update: (id, data) => request(`/locations/${id}`, { method: 'PUT', body: data }),
+    create: (data, roomId) => request('/locations', { method: 'POST', body: data, ...(roomId ? { headers: { 'X-Room-Id': roomId } } : {}) }),
+    update: (id, data, roomId) => request(`/locations/${id}`, { method: 'PUT', body: data, ...(roomId ? { headers: { 'X-Room-Id': roomId } } : {}) }),
     delete: (id) => request(`/locations/${id}`, { method: 'DELETE' }),
   },
 

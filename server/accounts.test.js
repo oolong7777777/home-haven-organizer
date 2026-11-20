@@ -27,7 +27,7 @@ test('accounts and many-to-many rooms enforce sharing, isolation and session lif
   assert.notEqual(userHash, password); assert.ok(await verifyPassword(password, userHash));
   const aCat = (await request('/categories', { cookie: alice.cookie, room: a })).data[0].id;
   assert.equal((await request('/categories', { cookie: alice.cookie, room: a })).data.length, 6);
-  const loc = await request('/locations', { method: 'POST', cookie: alice.cookie, room: a, body: { name: '书柜' } }); assert.equal(loc.status, 201);
+  const loc = await request('/locations', { method: 'POST', cookie: alice.cookie, room: a, body: { name: '书柜', type: 'cabinet', description: '靠窗的书柜' } }); assert.equal(loc.status, 201);
   const item = await request('/items', { method: 'POST', cookie: alice.cookie, room: a, body: { name: '共享书籍', quantity: 0, category_id: aCat, location_id: loc.data.id } }); assert.equal(item.status, 201); assert.equal(item.data.quantity, 0);
   assert.equal((await request(`/items/${item.data.id}/details`)).status, 401);
   assert.equal((await request(`/items/${item.data.id}/details`, { cookie: bob.cookie, room: b })).status, 404);
@@ -35,6 +35,14 @@ test('accounts and many-to-many rooms enforce sharing, isolation and session lif
   assert.equal(detail.status, 200); assert.equal(detail.data.item.id, item.data.id); assert.equal(detail.data.room.id, a);
   assert.equal(detail.data.item.photo_data, undefined); assert.equal(detail.data.locations[0].id, loc.data.id);
   assert.ok(detail.data.categories.some(category => category.id === aCat));
+  assert.equal(detail.data.locations[0].type, 'cabinet');
+  assert.equal(detail.data.locations[0].description, '靠窗的书柜');
+  const inlineHome = await request('/locations', { method: 'POST', cookie: alice.cookie, room: a, body: { name: '测试整层', type: 'home', description: '整层位置' } });
+  assert.equal(inlineHome.status, 201); assert.equal(inlineHome.data.type, 'home');
+  const inlineRename = await request('/locations/' + inlineHome.data.id, { method: 'PUT', cookie: alice.cookie, room: a, body: { name: '修改后的整层', type: inlineHome.data.type, description: inlineHome.data.description, parent_id: null } });
+  assert.equal(inlineRename.status, 200); assert.equal(inlineRename.data.description, '整层位置'); assert.equal(inlineRename.data.type, 'home');
+  assert.equal((await request('/locations/' + inlineHome.data.id, { method: 'PUT', cookie: bob.cookie, room: b, body: { name: '越权编辑位置' } })).status, 404);
+
   const searchByLocation = await request('/items?q=' + encodeURIComponent('书柜'), { cookie: alice.cookie, room: a });
   assert.equal(searchByLocation.data[0].id, item.data.id);
   assert.equal((await request('/items?q=' + encodeURIComponent('书柜'), { cookie: bob.cookie, room: b })).data.length, 0);

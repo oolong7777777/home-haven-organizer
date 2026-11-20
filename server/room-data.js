@@ -56,7 +56,7 @@ function createRoomData(db) {
   async function locationSave(home, data, id) {
     if (id) await own('locations', id, home);
     await locationParent(id, data.parent_id, home);
-    const type = ['room', 'cabinet', 'drawer', 'box', 'shelf', 'other'].includes(data.type) ? data.type : 'room';
+    const type = ['home', 'room', 'cabinet', 'drawer', 'box', 'shelf', 'other'].includes(data.type) ? data.type : 'room';
     const values = [name(data.name), data.parent_id || null, type, typeof data.description === 'string' ? data.description.slice(0, 2000) : null];
     if (id) await db.prepare('UPDATE locations SET name = ?, parent_id = ?, type = ?, description = ? WHERE id = ? AND household_id = ?').run(...values, id, home);
     else id = (await db.prepare('INSERT INTO locations (name, parent_id, type, description, household_id) VALUES (?, ?, ?, ?, ?)').run(...values, home)).lastInsertRowid;
@@ -122,7 +122,7 @@ function createRoomData(db) {
     const room = await db.prepare('SELECT h.id, h.name, m.role FROM items i JOIN households h ON h.id = i.household_id JOIN memberships m ON m.household_id = h.id WHERE i.id = ? AND m.user_id = ?').get(id, userId);
     if (!room) throw problem(404, '物品不存在或你无权访问所属房间');
     const item = await db.prepare(itemJoin + ' WHERE i.id = ? AND i.household_id = ?').get(id, room.id);
-    const locations = await db.prepare('SELECT id, name, parent_id FROM locations WHERE household_id = ?').all(room.id);
+    const locations = await db.prepare('SELECT id, name, parent_id, type, description FROM locations WHERE household_id = ?').all(room.id);
     const categories = await db.prepare('SELECT id, name, color, icon FROM categories WHERE household_id = ? ORDER BY name').all(room.id);
     return { item, room, locations, categories };
   }

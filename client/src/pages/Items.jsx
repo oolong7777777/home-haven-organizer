@@ -4,6 +4,7 @@ import { api } from '../api'
 import Modal from '../components/Modal'
 import ItemPhoto from '../components/ItemPhoto'
 import ItemExpiry from '../components/ItemExpiry'
+import ItemRelationField from '../components/ItemRelationField'
 import { validExpiry } from '../../../shared/item-expiry.mjs'
 import ItemCard from '../components/ItemCard'
 import { matchesItem, locationPaths } from '../../../shared/item-search.mjs'
@@ -26,6 +27,9 @@ export default function Items() {
   const [form, setForm] = useState(INIT)
   const [saving, setSaving] = useState(false)
   const [photoBusy, setPhotoBusy] = useState(false)
+  const [categoryEditing, setCategoryEditing] = useState(false)
+  const [locationEditing, setLocationEditing] = useState(false)
+  const relationBusy = categoryEditing || locationEditing
   const [error, setError] = useState(null)
   const [actionError, setActionError] = useState('')
   const [cardBusy, setCardBusy] = useState(false)
@@ -55,7 +59,7 @@ export default function Items() {
   })
 
   function closeModal() {
-    if (saving || photoBusy) return
+    if (saving || photoBusy || relationBusy) return
     setModal(false)
     if (searchParams.has('add') || searchParams.has('edit')) {
       const next = new URLSearchParams(searchParams)
@@ -72,7 +76,7 @@ export default function Items() {
   }
 
   async function handleSave() {
-    if (!form.name.trim() || photoBusy) return
+    if (!form.name.trim() || photoBusy || relationBusy) return
     setActionError('')
     const quantity = Number(form.quantity)
     if (!Number.isInteger(quantity) || quantity < 0) {
@@ -300,29 +304,13 @@ export default function Items() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">分类</label>
-              <select
-                value={form.category_id}
-                onChange={e => setF('category_id', e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 bg-white"
-              >
-                <option value="">不选择分类</option>
-                {categories.map(c => <option key={c.id} value={String(c.id)}>{c.icon} {c.name}</option>)}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">存放位置</label>
-              <select
-                value={form.location_id}
-                onChange={e => setF('location_id', e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 bg-white"
-              >
-                <option value="">未指定位置</option>
-                {locations.map(l => <option key={l.id} value={String(l.id)}>{l.name}</option>)}
-              </select>
-            </div>
+            <ItemRelationField kind="categories" value={form.category_id} rows={categories} onChange={value => setF('category_id', value)} onSaved={saved => {
+              setCategories(current => [...current.filter(row => row.id !== saved.id), saved].sort((a, b) => a.name.localeCompare(b.name, 'zh-CN')))
+              setItems(current => current.map(row => row.category_id === saved.id ? { ...row, category_name: saved.name, category_icon: saved.icon, category_color: saved.color } : row))
+            }} onEditing={setCategoryEditing} disabled={saving || photoBusy} />
+            <ItemRelationField kind="locations" value={form.location_id} rows={locations} onChange={value => setF('location_id', value)} onSaved={saved => {
+              setLocations(current => [...current.filter(row => row.id !== saved.id), saved].sort((a, b) => a.name.localeCompare(b.name, 'zh-CN')))
+            }} onEditing={setLocationEditing} disabled={saving || photoBusy} />
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">备注</label>
@@ -344,7 +332,7 @@ export default function Items() {
               </button>
               <button
                 onClick={handleSave}
-                disabled={!form.name.trim() || saving || photoBusy}
+                disabled={!form.name.trim() || saving || photoBusy || relationBusy}
                 className="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors disabled:opacity-40"
               >
                 {saving ? '保存中...' : '保存'}
