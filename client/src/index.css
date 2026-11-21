@@ -15,3 +15,420 @@ body {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+:root { color: #172033; background: #f6f7fb; }
+body { margin: 0; }
+button, input, select, textarea { font: inherit; }
+a, button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 3px solid #a5b4fc; outline-offset: 3px; }
+.haven-shell { display: grid; grid-template-columns: 236px minmax(0, 1fr); height: 100vh; height: 100dvh; overflow: hidden; }
+.haven-sidebar { display: flex; flex-direction: column; background: white; border-right: 1px solid #e9ecf3; padding: 30px 16px 20px; }
+.haven-brand { display: flex; align-items: center; gap: 12px; padding: 0 12px 30px; text-decoration: none; }
+.haven-brand-icon { width: 42px; height: 42px; background: #5145e9; border-radius: 15px; display: grid; place-items: center; font-size: 24px; flex-shrink: 0; }
+.haven-brand-copy { display: grid; gap: 2px; }
+.haven-brand-copy strong { font-size: 17px; letter-spacing: -.5px; color: #172033; }
+.haven-brand-copy small { color: #939aab; font-size: 11px; letter-spacing: .5px; }
+.haven-nav { display: grid; gap: 8px; }
+.haven-nav-link { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 12px; color: #657086; font-size: 14px; font-weight: 500; transition: background .15s; }
+.haven-nav-link > span:first-child { font-size: 20px; }
+.haven-nav-link:hover { background: #f5f6fb; }
+.haven-nav-link.is-active { background: #eeedff; color: #5145d8; font-weight: 650; }
+.haven-sidebar-note { margin-top: auto; padding: 24px 12px 0; color: #9aa1b0; font-size: 11px; }
+.haven-main { min-width: 0; min-height: 0; overflow-y: auto; overflow-x: hidden; background: #f6f7fb; scroll-padding-top: 16px; }
+.haven-storage { display: flex; align-items: center; gap: 8px; padding: 11px clamp(16px, 3vw, 40px); border-bottom: 1px solid #e9ecf3; background: #fff; font-size: 12px; color: #718077; line-height: 1.6; }
+.haven-storage.is-warning { color: #94601e; background: #fffdf6; border-color: #f3ead6; }
+.haven-storage-dot { flex-shrink: 0; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.haven-storage-message { min-width: 0; overflow-wrap: anywhere; }
+.haven-export { margin-left: auto; flex-shrink: 0; font-weight: 600; color: #6155c9; padding: 4px; }
+.haven-page { width: 100%; max-width: 1440px; margin: 0 auto; padding: clamp(22px, 3vw, 42px) clamp(16px, 3vw, 40px) 48px; }
+.haven-page-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; margin-bottom: 28px; }
+.haven-eyebrow { font-size: 11px; color: #8b92a5; letter-spacing: 1.4px; margin-bottom: 8px; }
+.haven-page-heading h1 { font-size: clamp(24px, 2.3vw, 30px); font-weight: 750; line-height: 1.3; letter-spacing: -.8px; }
+.haven-subtitle { font-size: 13px; color: #858c9e; margin-top: 8px; }
+.haven-button { display: inline-flex; justify-content: center; align-items: center; min-height: 44px; gap: 8px; padding: 11px 18px; border-radius: 12px; font-size: 13px; font-weight: 600; border: 1px solid #e4e6f0; background: white; white-space: nowrap; }
+.haven-button-primary { background: #5748e9; color: #fff; border-color: #5748e9; box-shadow: 0 5px 12px #5748e91a; }
+.haven-button-primary:hover { background: #493bd0; }
+.haven-stat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(12px, 1.6vw, 22px); margin-bottom: 28px; }
+.haven-stat { min-width: 0; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; padding: clamp(16px, 2vw, 24px); border-radius: 18px; background: white; border: 1px solid #e9ecf3; box-shadow: 0 2px 4px #17203302; transition: border-color .15s, transform .15s; }
+.haven-stat:hover { border-color: #c8c5f8; transform: translateY(-2px); }
+.haven-stat-icon { grid-column: 2; grid-row: 1 / 3; width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; font-size: 24px; background: #f0f5ff; }
+.haven-stat-label { grid-column: 1; grid-row: 1; font-size: 12px; color: #7c8495; }
+.haven-stat-value { grid-column: 1; grid-row: 2; font-size: clamp(26px, 2.6vw, 34px); line-height: 1.2; font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.haven-tone-purple .haven-stat-icon { background: #f5f0ff; }
+.haven-tone-green .haven-stat-icon { background: #edf9f3; }
+.haven-tone-amber .haven-stat-icon { background: #fff8e8; }
+.haven-overview-grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr); align-items: start; gap: 24px; }
+.haven-panel { min-width: 0; background: #fff; border: 1px solid #e9ecf3; border-radius: 18px; overflow: hidden; }
+.haven-panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 24px; }
+.haven-panel-heading h2 { font-size: 15px; font-weight: 650; }
+.haven-panel-heading p { color: #969dac; font-size: 11px; margin-top: 5px; }
+.haven-text-link { font-size: 12px; color: #6558d9; flex-shrink: 0; padding: 6px 0; }
+.haven-recent-list { padding: 0 24px 10px; }
+.haven-recent-row { display: flex; align-items: center; gap: 14px; min-height: 85px; border-top: 1px solid #f0f1f6; padding: 16px 0; }
+.haven-recent-row:hover .haven-item-copy h3 { color: #5748e9; }
+.haven-item-icon { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; border-radius: 13px; font-size: 22px; }
+.haven-item-copy { min-width: 0; flex: 1; }
+.haven-item-copy h3 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 600; }
+.haven-item-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; color: #929aad; font-size: 11px; overflow-wrap: anywhere; }
+.haven-item-quantity { flex-shrink: 0; color: #525d74; font-size: 15px; font-weight: 600; max-width: 30%; overflow-wrap: anywhere; text-align: right; }
+.haven-item-quantity small { font-size: 11px; font-weight: 400; color: #929aad; }
+.haven-quick-list { padding: 0 14px; }
+.haven-quick-link { display: flex; align-items: center; gap: 12px; padding: 14px 10px; border-radius: 12px; }
+.haven-quick-link:hover { background: #f7f7fc; }
+.haven-quick-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: #f7f7fc; font-size: 20px; flex-shrink: 0; }
+.haven-quick-link > div { min-width: 0; flex: 1; }
+.haven-quick-link strong { font-size: 13px; font-weight: 550; display: block; }
+.haven-quick-link small { font-size: 11px; color: #969dac; display: block; margin-top: 4px; }
+.haven-quick-link > span:last-child { color: #a6adbe; font-size: 15px; }
+.haven-quick-tip { margin: 14px 24px 24px; padding-top: 18px; border-top: 1px solid #f0f1f6; color: #9aa1b0; font-size: 11px; line-height: 1.8; }
+.haven-empty { display: flex; align-items: center; flex-direction: column; text-align: center; padding: 32px 20px 42px; }
+.haven-empty > span { font-size: 38px; margin-bottom: 16px; }
+.haven-empty h3 { font-size: 15px; font-weight: 600; }
+.haven-empty p { color: #969dac; font-size: 12px; margin: 8px 0 22px; line-height: 1.8; }
+.haven-state { min-height: 260px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; color: #7c8495; }
+.haven-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 18px; }
+.haven-category-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 160px), 1fr)); gap: 16px; }
+.haven-modal-body { min-height: 0; padding: 24px; }
+@media (min-width: 768px) and (max-width: 1199px) {
+  .haven-shell { grid-template-columns: 88px minmax(0, 1fr); }
+  .haven-sidebar { padding: 24px 10px; }
+  .haven-brand { justify-content: center; padding: 0 0 28px; }
+  .haven-brand-copy, .haven-sidebar-note { display: none; }
+  .haven-nav-link { flex-direction: column; gap: 6px; padding: 12px 4px; font-size: 11px; }
+}
+@media (max-width: 1099px) {
+  .haven-overview-grid { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .haven-quick-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding-bottom: 18px; }
+  .haven-quick-link { align-items: flex-start; }
+  .haven-quick-link small { line-height: 1.6; }
+  .haven-quick-link > span:last-child { display: none; }
+  .haven-quick-tip { display: none; }
+}
+@media (max-width: 767px) {
+  .haven-shell { display: flex; flex-direction: column; }
+  .haven-sidebar { display: contents; }
+  .haven-brand { flex-shrink: 0; height: 66px; padding: 10px 20px; gap: 10px; background: white; border-bottom: 1px solid #e9ecf3; }
+  .haven-brand-icon { width: 35px; height: 35px; border-radius: 12px; font-size: 20px; }
+  .haven-brand-copy strong { font-size: 15px; }
+  .haven-brand-copy small { font-size: 10px; }
+  .haven-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 30; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 7px 10px calc(7px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid #e9ecf3; background: #fffffff5; backdrop-filter: blur(14px); }
+  .haven-nav-link { flex-direction: column; gap: 4px; border-radius: 12px; padding: 7px 4px; font-size: 11px; min-height: 50px; }
+  .haven-nav-link > span:first-child { font-size: 20px; line-height: 1.2; }
+  .haven-sidebar-note { display: none; }
+  .haven-main { flex: 1; padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
+  .haven-storage { padding: 10px 16px; font-size: 10px; gap: 7px; align-items: flex-start; }
+  .haven-storage-dot { margin-top: 5px; width: 5px; height: 5px; }
+  .haven-export { padding: 0; }
+  .haven-page { padding: 24px 16px 28px; }
+  .haven-page-heading { gap: 16px; margin-bottom: 22px; }
+  .haven-page-heading h1 { font-size: 24px; }
+  .haven-page-heading .haven-button { padding: 10px 12px; font-size: 12px; }
+  .haven-eyebrow { font-size: 10px; letter-spacing: 1px; }
+  .haven-subtitle { font-size: 12px; }
+  .haven-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 22px; }
+  .haven-stat { padding: 16px; border-radius: 15px; gap: 8px; }
+  .haven-stat-icon { width: 36px; height: 36px; font-size: 20px; border-radius: 12px; }
+  .haven-stat-value { font-size: 28px; }
+  .haven-stat-label { font-size: 11px; }
+  .haven-panel { border-radius: 16px; }
+  .haven-panel-heading { padding: 20px 18px; gap: 10px; }
+  .haven-recent-list { padding: 0 18px 6px; }
+  .haven-recent-row { gap: 12px; min-height: 80px; }
+  .haven-item-copy h3 { font-size: 13px; }
+  .haven-quick-list { grid-template-columns: minmax(0, 1fr); padding: 0 8px 10px; }
+  .haven-quick-link { align-items: center; padding: 12px 10px; }
+  .haven-quick-link > span:last-child { display: inline; }
+  .haven-category-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .haven-modal-body { padding: 20px 16px; }
+  .haven-page input, .haven-page select, .haven-page textarea, .haven-modal-body input, .haven-modal-body select, .haven-modal-body textarea { font-size: 16px; min-width: 0; }
+}
+@media (max-width: 359px) {
+  .haven-page-heading .haven-button { width: 100%; }
+  .haven-stat { padding: 12px; }
+  .haven-stat-icon { width: 28px; height: 28px; font-size: 17px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
+
+.haven-locations { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 24px; align-items: start; }
+.haven-location-tree { min-width: 0; border: 1px solid #e9ecf3; background: white; border-radius: 16px; overflow: hidden; }
+.haven-location-nodes { max-height: 65dvh; overflow-y: auto; }
+.haven-location-detail { min-width: 0; padding: 8px 0; min-height: 280px; }
+@media (max-width: 1099px) {
+  .haven-locations { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .haven-location-nodes { max-height: 34dvh; }
+}
+@media (hover: none) {
+  .group .opacity-0, .group [class*="opacity-0"] { opacity: 1; }
+}
+
+.haven-room-switch { margin: 0 10px 24px; display: grid; gap: 8px; }
+.haven-room-switch label { color: #939aab; font-size: 11px; }
+.haven-room-switch select { min-width: 0; width: 100%; border: 1px solid #e4e6f0; background: #f8f9fc; padding: 10px; border-radius: 10px; font-size: 13px; color: #343c55; }
+.haven-room-switch a { font-size: 11px; color: #6558d9; }
+.haven-auth-loading { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; color: #7c8495; background: #f6f7fb; }
+.haven-login-page { min-height: 100dvh; display: grid; grid-template-columns: 1fr 1fr; gap: clamp(32px, 6vw, 100px); align-items: center; max-width: 1200px; margin: auto; padding: 64px 40px; }
+.haven-login-story { padding: 28px; }
+.haven-login-brand { font-size: 21px; font-weight: 700; }
+.haven-login-story h1 { font-size: clamp(32px, 4vw, 48px); line-height: 1.5; letter-spacing: -1.8px; margin: 48px 0 20px; font-weight: 750; }
+.haven-login-story > p { color: #8991a3; font-size: 15px; line-height: 2; max-width: 360px; }
+.haven-login-features { display: flex; flex-wrap: wrap; gap: 14px; color: #7c8495; font-size: 12px; margin-top: 40px; }
+.haven-auth-card { background: white; border: 1px solid #e4e6f0; border-radius: 24px; padding: 32px; box-shadow: 0 12px 40px #29234d06; }
+.haven-auth-tabs { display: grid; grid-template-columns: 1fr 1fr; background: #f4f5fa; border-radius: 12px; padding: 5px; margin-bottom: 28px; }
+.haven-auth-tabs button { padding: 10px; font-size: 14px; color: #8991a3; border-radius: 9px; }
+.haven-auth-tabs button.is-active { background: white; color: #5748e9; box-shadow: 0 2px 8px #29234d09; font-weight: 650; }
+.haven-auth-card h2 { font-size: 24px; font-weight: 700; }
+.haven-auth-description { font-size: 12px; color: #939aab; margin: 10px 0 24px; line-height: 1.8; }
+.haven-account-form { display: grid; gap: 16px; }
+.haven-account-form label, .haven-invite label { font-size: 12px; font-weight: 500; color: #626d85; display: grid; gap: 8px; }
+.haven-account-form input:not([type="checkbox"]), .haven-invite input { border: 1px solid #e0e4ee; border-radius: 10px; background: white; padding: 12px; width: 100%; min-width: 0; font-size: 14px; color: #28334b; }
+.haven-account-form > small { color: #939aab; font-size: 10px; margin-top: -8px; }
+.haven-account-form .haven-checkbox-label { display: flex; align-items: center; gap: 8px; line-height: 1.6; }
+.haven-checkbox-label input { width: 16px; height: 16px; accent-color: #5748e9; }
+.haven-form-error, .haven-form-success { border-radius: 10px; padding: 12px; margin-bottom: 16px; font-size: 12px; line-height: 1.7; overflow-wrap: anywhere; }
+.haven-form-error { color: #b83b3b; background: #fff0f0; }
+.haven-form-success { color: #227f5b; background: #effaf4; }
+.haven-auth-footnote, .haven-small-note { color: #969dac; font-size: 11px; line-height: 1.9; margin-top: 20px; }
+.haven-account-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: start; }
+.haven-account-section { padding: 24px; }
+.haven-account-section h2 { font-size: 16px; font-weight: 650; }
+.haven-account-section > p { font-size: 12px; line-height: 1.8; color: #939aab; margin: 10px 0 20px; }
+.haven-room-list { display: grid; gap: 12px; margin-bottom: 24px; }
+.haven-room-row { display: flex; gap: 12px; align-items: center; justify-content: space-between; border-bottom: 1px solid #eef0f6; padding: 14px 0; }
+.haven-room-row > div { min-width: 0; }
+.haven-room-row strong { font-size: 14px; font-weight: 550; overflow-wrap: anywhere; }
+.haven-room-row small { font-size: 11px; display: block; color: #939aab; margin-top: 4px; }
+.haven-room-row button { flex-shrink: 0; padding: 8px 12px; }
+.haven-form-divider { border-top: 1px solid #eef0f6; padding-top: 24px; margin-top: 24px; }
+.haven-members { margin-bottom: 24px; }
+.haven-members li { display: flex; justify-content: space-between; gap: 16px; padding: 14px 0; border-bottom: 1px solid #eef0f6; font-size: 13px; }
+.haven-members li > span { overflow-wrap: anywhere; min-width: 0; }
+.haven-members li > span:last-child { flex-shrink: 0; color: #939aab; font-size: 11px; }
+.haven-members small { display: block; color: #939aab; font-size: 11px; margin-top: 5px; }
+.haven-invite { display: flex; gap: 10px; align-items: end; margin-top: 16px; }
+.haven-invite label { flex: 1; min-width: 0; }
+button:disabled { opacity: .55; cursor: not-allowed; }
+@media (min-width: 768px) and (max-width: 1199px) {
+  .haven-room-switch { margin: 0 0 20px; gap: 6px; }
+  .haven-room-switch label { font-size: 10px; text-align: center; }
+  .haven-room-switch select { padding: 6px 0; font-size: 10px; }
+  .haven-room-switch a { text-align: center; font-size: 10px; }
+}
+@media (max-width: 767px) {
+  .haven-nav { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .haven-room-switch { margin: 0; padding: 10px 16px; flex-shrink: 0; background: white; border-bottom: 1px solid #e9ecf3; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+  .haven-room-switch select { padding: 8px; font-size: 16px; }
+  .haven-room-switch a { font-size: 10px; }
+  .haven-login-page { grid-template-columns: minmax(0, 1fr); padding: 24px 16px 40px; gap: 24px; }
+  .haven-login-story { padding: 0 8px; }
+  .haven-login-story h1 { font-size: 28px; margin: 24px 0 12px; letter-spacing: -1px; }
+  .haven-login-story > p { font-size: 12px; max-width: none; }
+  .haven-login-features { display: none; }
+  .haven-auth-card { padding: 24px 20px; border-radius: 18px; }
+  .haven-account-grid { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .haven-account-section { padding: 20px 18px; }
+  .haven-account-form input:not([type="checkbox"]), .haven-invite input { font-size: 16px; }
+}
+
+.haven-room-card { border: 1px solid #eceef5; border-radius: 12px; padding: 0 14px; }
+.haven-room-card .haven-room-row { border-bottom: 0; }
+.haven-room-actions { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 0 0 14px; }
+.haven-room-actions button { padding: 5px 0; font-size: 12px; color: #6558d9; min-height: 32px; }
+.haven-danger-text, .haven-room-actions .haven-danger-text { color: #c14545; }
+.haven-button-danger { background: #c74343; color: white; border-color: #c74343; }
+.haven-button-danger:hover { background: #af3535; }
+.haven-room-management-buttons, .haven-dialog-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.haven-dialog-actions > button { flex: 1; }
+.haven-delete-warning, .haven-remove-confirm { background: #fff3f1; color: #a5463e; padding: 16px; border-radius: 12px; font-size: 12px; line-height: 1.9; }
+.haven-remove-confirm .haven-room-management-buttons { margin-top: 14px; }
+.haven-managed-member { align-items: center; }
+.haven-managed-member button { font-size: 12px; flex-shrink: 0; min-height: 40px; padding: 6px; }
+.haven-no-rooms { padding: 24px 16px; color: #939aab; background: #f8f9fc; border-radius: 12px; margin-bottom: 24px; font-size: 13px; line-height: 1.9; }
+
+.haven-photo-label { display: block; font-size: 14px; font-weight: 550; color: #4b5563; margin-bottom: 10px; }
+.haven-photo-label small { font-size: 11px; font-weight: 400; color: #939aab; margin-left: 8px; }
+.haven-photo-preview { width: 100%; max-height: 240px; object-fit: contain; border-radius: 12px; background: #f5f6fa; }
+.haven-photo-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 110px; border: 1px dashed #d8dcec; border-radius: 12px; background: #fafbfe; font-size: 28px; }
+.haven-photo-placeholder span { font-size: 12px; color: #939aab; }
+.haven-photo-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 12px; }
+.haven-photo-actions > button { font-size: 12px; }
+.haven-photo-editor .haven-small-note { margin-top: 8px; }
+.haven-item-photo { width: 100%; height: 170px; object-fit: cover; border-radius: 12px; margin-bottom: 16px; background: #f5f6fa; }
+
+.haven-item-icon img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+
+.haven-card-order-tip { font-size: 12px; line-height: 1.8; color: #8792a4; margin: -4px 0 16px; }
+.haven-product-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; align-items: stretch; }
+.haven-product-card { min-width: 0; position: relative; background: white; border: 1px solid #e2e8f0; border-radius: 22px; box-shadow: 0 3px 8px #26385108; display: flex; flex-direction: column; }
+.haven-product-card:hover { box-shadow: 0 6px 18px #26385110; }
+.haven-product-card.is-dragging { z-index: 40; opacity: .88; box-shadow: 0 18px 40px #26385130; }
+.haven-product-media { position: relative; aspect-ratio: 1 / 1; border-radius: 21px 21px 0 0; background: #f0f4f9; }
+.haven-product-media > img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; user-select: none; }
+.haven-product-no-photo { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; width: 100%; height: 100%; border-radius: inherit; }
+.haven-product-no-photo > span { font-size: 64px; opacity: .8; }
+.haven-product-no-photo small { font-size: 12px; color: #929eb0; }
+.haven-product-count { position: absolute; top: 14px; left: 14px; border-radius: 24px; padding: 5px 12px; background: #fffffff2; color: #24344b; font-size: 14px; box-shadow: 0 2px 8px #00000008; }
+.haven-product-drag { position: absolute; top: 12px; right: 12px; width: 40px; height: 40px; background: #ffffffec; color: #50617b; border-radius: 50%; font-size: 24px; cursor: grab; touch-action: none; user-select: none; -webkit-touch-callout: none; }
+.haven-product-drag:active { cursor: grabbing; }
+.haven-product-tools { position: absolute; bottom: 12px; right: 12px; z-index: 10; }
+.haven-product-menu-toggle { width: 40px; height: 40px; background: #fffffff2; color: #253750; border-radius: 50%; font-size: 28px; line-height: 1; box-shadow: 0 2px 8px #0000000b; }
+.haven-product-menu { position: absolute; top: 48px; right: 0; width: 168px; padding: 7px; background: white; border: 1px solid #e1e6ef; border-radius: 14px; box-shadow: 0 8px 28px #26385125; z-index: 20; }
+.haven-product-menu button { display: block; width: 100%; padding: 11px 14px; border-radius: 8px; text-align: left; font-size: 13px; color: #334155; }
+.haven-product-menu button:hover { background: #f3f6fb; }
+.haven-product-menu .haven-danger-text { color: #d14545; }
+.haven-product-content { padding: 18px; flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.haven-product-content h3 { font-size: 17px; font-weight: 650; line-height: 1.5; color: #1d2d43; overflow-wrap: anywhere; }
+.haven-product-location { color: #76849a; font-size: 12px; line-height: 1.8; margin-top: 6px; overflow-wrap: anywhere; }
+.haven-product-description { color: #8b96a9; font-size: 12px; line-height: 1.7; margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.haven-product-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 16px; }
+.haven-product-tags > span { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 550; }
+.haven-product-notes { font-size: 11px; color: #99a3b2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: -4px 0 12px; }
+.haven-product-quantity { display: flex; align-items: center; margin-top: auto; background: #f8fafc; border: 1px solid #e0e7ef; border-radius: 14px; min-height: 46px; }
+.haven-product-quantity button { width: 48px; min-height: 46px; flex-shrink: 0; font-size: 22px; color: #65748b; border-radius: 13px; }
+.haven-product-quantity button:hover:not(:disabled) { background: #eef2f8; }
+.haven-product-quantity output { flex: 1; min-width: 0; text-align: center; color: #253750; font-size: 15px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.haven-product-quantity output small { font-size: 11px; color: #9aa4b3; margin-left: 5px; }
+@media (max-width: 767px) {
+  .haven-product-grid { gap: 18px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .haven-product-content { padding: 14px; }
+  .haven-product-content h3 { font-size: 15px; }
+  .haven-product-quantity button { width: 38px; }
+}
+@media (max-width: 479px) {
+  .haven-product-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (min-width: 768px) and (max-width: 1099px) { .haven-product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.haven-product-menu a { display: block; padding: 11px 14px; border-radius: 8px; font-size: 13px; color: #334155; }
+.haven-product-menu a:hover { background: #f3f6fb; }
+.haven-detail-header h1 { overflow-wrap: anywhere; }
+.haven-detail-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr); gap: 24px; align-items: start; }
+.haven-detail-photo { width: 100%; max-height: 440px; object-fit: contain; background: #eef2f7; }
+.haven-detail-placeholder { padding: 56px; font-size: 72px; text-align: center; background: #f1f4fa; }
+.haven-detail-info { padding: 24px; }
+.haven-detail-info h2, .haven-qr-panel h2 { font-size: 18px; font-weight: 650; overflow-wrap: anywhere; }
+.haven-detail-info dl { margin: 20px 0; display: grid; gap: 14px; }
+.haven-detail-info dl > div { display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 14px; font-size: 13px; line-height: 1.8; }
+.haven-detail-info dt { color: #939eae; }
+.haven-detail-info dd { overflow-wrap: anywhere; white-space: pre-wrap; color: #52617a; }
+.haven-detail-info > .haven-button { margin-top: 16px; width: 100%; }
+.haven-qr-panel { padding: 24px; }
+.haven-qr-heading p, .haven-qr-note { font-size: 12px; color: #8c97a8; line-height: 1.9; margin-top: 10px; }
+.haven-qr-label { width: 100%; max-width: 280px; margin: 22px auto; padding: 12px 12px 20px; border: 1px dashed #d9dee8; border-radius: 12px; background: white; color: #111; text-align: center; }
+.haven-qr-label img { width: 100%; height: auto; image-rendering: auto; }
+.haven-qr-label strong { display: block; font-size: 16px; overflow-wrap: anywhere; padding: 0 8px; }
+.haven-qr-label small { display: block; color: #64748b; font-size: 11px; margin-top: 8px; }
+.haven-qr-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.haven-qr-actions .haven-button { flex: 1; padding: 10px; font-size: 12px; }
+.haven-qr-link { width: 100%; border: 1px solid #e1e6ef; border-radius: 8px; padding: 10px; font-size: 11px; color: #8994a6; margin-top: 12px; }
+@media (max-width: 999px) { .haven-detail-grid { grid-template-columns: minmax(0, 1fr); } }
+@media print {
+  body:has(.haven-qr-label), body:has(.haven-qr-label) #root { background: white !important; }
+  body:has(.haven-qr-label) .haven-shell, body:has(.haven-qr-label) .haven-main, body:has(.haven-qr-label) .haven-page, body:has(.haven-qr-label) .haven-detail-grid { display: block !important; height: auto !important; overflow: visible !important; padding: 0 !important; margin: 0 !important; }
+  body:has(.haven-qr-label) .haven-sidebar, body:has(.haven-qr-label) .haven-storage, .haven-item-detail .haven-detail-header, .haven-item-detail .haven-detail-record, .haven-item-detail .haven-qr-heading, .haven-item-detail .haven-qr-actions, .haven-item-detail .haven-qr-note, .haven-item-detail .haven-qr-link, .haven-item-detail .haven-form-error { display: none !important; }
+  .haven-item-detail .haven-qr-panel { border: none; padding: 0; box-shadow: none; }
+  .haven-item-detail .haven-qr-label { width: 55mm; margin: 0; padding: 2mm 2mm 4mm; border: 1px solid #ddd; border-radius: 0; break-inside: avoid; }
+  .haven-item-detail .haven-qr-label strong { font-size: 11pt; }
+  .haven-item-detail .haven-qr-label small { font-size: 8pt; }
+}
+
+/* Compact photo cards: keep two usable columns on phones. */
+.haven-product-media { aspect-ratio: 4 / 3; }
+@media (max-width: 767px) {
+  .haven-product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .haven-product-card { border-radius: 15px; }
+  .haven-product-media { aspect-ratio: 4 / 3; border-radius: 14px 14px 0 0; }
+  .haven-product-content { padding: 10px; }
+  .haven-product-content h3 { font-size: 14px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .haven-product-location { font-size: 10px; line-height: 1.5; margin-top: 5px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .haven-product-description { font-size: 10px; -webkit-line-clamp: 1; margin-top: 4px; }
+  .haven-product-tags { margin: 8px 0 10px; gap: 4px; }
+  .haven-product-tags > span { padding: 3px 7px; font-size: 10px; }
+  .haven-product-notes { display: none; }
+  .haven-product-count { top: 8px; left: 8px; font-size: 11px; padding: 3px 8px; }
+  .haven-product-drag { top: 6px; right: 6px; width: 34px; height: 34px; font-size: 22px; }
+  .haven-product-tools { right: 6px; bottom: 6px; }
+  .haven-product-menu-toggle { width: 34px; height: 34px; font-size: 24px; }
+  .haven-product-menu { top: 40px; width: 148px; }
+  .haven-product-menu a, .haven-product-menu button { font-size: 12px; padding: 10px; }
+  .haven-product-quantity { min-height: 36px; border-radius: 10px; }
+  .haven-product-quantity button { width: 32px; min-height: 36px; font-size: 18px; }
+  .haven-product-quantity output { font-size: 13px; }
+  .haven-product-quantity output small { font-size: 9px; margin-left: 3px; }
+  .haven-card-order-tip { font-size: 10px; margin-bottom: 12px; }
+}
+@media (max-width: 319px) { .haven-product-grid { grid-template-columns: minmax(0, 1fr); } }
+.haven-detail-editor { padding: 24px; }
+.haven-editor-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.haven-editor-heading h2 { font-size: 16px; font-weight: 650; }
+.haven-editor-heading span { font-size: 11px; color: #939eae; }
+.haven-editor-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.haven-detail-editor select, .haven-detail-editor textarea { min-width: 0; width: 100%; border: 1px solid #e0e4ee; padding: 12px; border-radius: 10px; font-size: 14px; background: white; color: #28334b; }
+.haven-editor-actions { display: flex; gap: 12px; }
+.haven-editor-actions .haven-button { flex: 1; }
+@media (max-width: 767px) { .haven-detail-editor { padding: 18px; } .haven-detail-editor select, .haven-detail-editor textarea { font-size: 16px; } }
+@media print { .haven-item-detail .haven-form-success { display: none !important; } }
+
+.haven-search-help { color: #929daf; font-size: 11px; line-height: 1.7; margin: -10px 0 18px; }
+
+/* The image must not contribute its intrinsic height to the grid row. */
+.haven-product-grid { align-items: start; }
+.haven-product-media { width: 100%; height: 0; min-height: 0; padding-bottom: 65%; aspect-ratio: auto; flex: 0 0 auto; }
+.haven-product-media > img, .haven-product-no-photo { position: absolute; inset: 0; display: block; width: 100%; height: 100%; max-height: 100%; object-fit: cover; }
+.haven-product-no-photo { display: flex; }
+.haven-product-content { flex: none; display: grid; grid-template-rows: 22px 32px 18px 24px 38px; gap: 6px; padding: 12px; }
+.haven-product-content h3 { display: block; font-size: 16px; line-height: 22px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.haven-product-summary { min-width: 0; font-size: 12px; line-height: 16px; color: #7b879a; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.haven-product-expiry { font-size: 11px; line-height: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #8490a3; }
+.haven-product-expiry.is-permanent { color: #0a9a70; }
+.haven-product-expiry.is-soon { color: #bb7b15; }
+.haven-product-expiry.is-expired { color: #cf4d4d; }
+.haven-product-meta { min-width: 0; display: flex; align-items: center; gap: 8px; overflow: hidden; }
+.haven-product-category { flex-shrink: 0; max-width: 65%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; line-height: 20px; padding: 0 8px; border-radius: 14px; }
+.haven-product-brief { min-width: 0; font-size: 10px; color: #9aa4b4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.haven-product-quantity { margin-top: 0; min-height: 38px; border-radius: 11px; }
+.haven-product-quantity button { width: 40px; min-height: 36px; font-size: 20px; }
+.haven-product-drag { top: auto; right: auto; left: 8px; bottom: 8px; width: 34px; height: 34px; font-size: 21px; }
+.haven-product-tools { right: 8px; bottom: 8px; }
+.haven-product-menu-toggle { width: 34px; height: 34px; font-size: 24px; }
+.haven-product-menu { top: 40px; }
+.haven-expiry-badge { position: absolute; top: 10px; right: 10px; font-size: 11px; line-height: 1.4; border-radius: 18px; padding: 4px 9px; color: #fff; background: #8496b0; }
+.haven-expiry-badge.is-permanent { background: #00b98a; }
+.haven-expiry-badge.is-valid { background: #6c92b6; }
+.haven-expiry-badge.is-soon { background: #d99320; }
+.haven-expiry-badge.is-expired { background: #d55b5b; }
+.haven-expiry-editor { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; min-width: 0; border: 1px solid #e7eaf2; border-radius: 12px; padding: 14px; }
+.haven-expiry-editor legend { font-size: 13px; color: #62708a; padding: 0 5px; }
+.haven-expiry-editor label { display: grid; gap: 6px; font-size: 12px; color: #7c879a; min-width: 0; }
+.haven-expiry-editor input, .haven-expiry-editor select { width: 100%; min-width: 0; padding: 10px; border: 1px solid #e0e4ee; border-radius: 9px; background: white; color: #344158; font-size: 13px; }
+.haven-expiry-editor p { grid-column: 1 / -1; color: #99a1b0; font-size: 10px; line-height: 1.7; }
+@media (max-width: 767px) {
+  .haven-product-media { height: 0; aspect-ratio: auto; padding-bottom: 65%; }
+  .haven-product-content { padding: 10px; grid-template-rows: 20px 30px 16px 20px 34px; gap: 5px; }
+  .haven-product-content h3 { font-size: 14px; line-height: 20px; }
+  .haven-product-summary { font-size: 10px; line-height: 15px; }
+  .haven-product-expiry { font-size: 9px; line-height: 16px; }
+  .haven-product-category { font-size: 9px; line-height: 18px; padding: 0 6px; }
+  .haven-product-brief { font-size: 9px; }
+  .haven-product-meta { gap: 5px; }
+  .haven-product-quantity { min-height: 34px; }
+  .haven-product-quantity button { min-height: 32px; width: 30px; font-size: 18px; }
+  .haven-expiry-badge { top: 8px; right: 8px; font-size: 9px; padding: 3px 7px; }
+  .haven-product-drag { left: 6px; bottom: 6px; width: 30px; height: 30px; }
+  .haven-product-tools { bottom: 6px; right: 6px; }
+  .haven-product-menu-toggle { width: 30px; height: 30px; }
+  .haven-product-menu { top: 36px; }
+  .haven-expiry-editor { grid-template-columns: minmax(0, 1fr); }
+  .haven-expiry-editor input, .haven-expiry-editor select { font-size: 16px; }
+}
+
+.haven-product-summary { display: grid; grid-template-rows: 16px 16px; -webkit-line-clamp: unset; }
+.haven-product-place, .haven-product-caption { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 16px; }
+.haven-product-place { color: #76849a; }
+.haven-product-caption { color: #99a3b3; }
+@media (max-width: 767px) {
+  .haven-product-summary { grid-template-rows: 15px 15px; }
+  .haven-product-place, .haven-product-caption { line-height: 15px; }
+}

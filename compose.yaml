@@ -1,0 +1,13 @@
+services:
+  home-haven:
+    build: .
+    ports:
+      - "127.0.0.1:3001:3001"
+    environment:
+      BASIC_AUTH_USER: haven
+      BASIC_AUTH_PASSWORD: ${BASIC_AUTH_PASSWORD:?请先在.env文件设置家庭访问密码}
+    volumes:
+      - home-haven-data:/data
+    restart: unless-stopped
+volumes:
+  home-haven-data:
